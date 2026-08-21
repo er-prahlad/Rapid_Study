@@ -1,0 +1,65 @@
+package com.rapidstudy.entity;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+/**
+ * MockTest entity representing mock test configurations
+ */
+@Entity
+@Table(name = "mock_tests", indexes = {
+    @Index(name = "idx_mock_tests_exam_id", columnList = "examId"),
+    @Index(name = "idx_mock_tests_is_published", columnList = "isPublished")
+})
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class MockTest {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "exam_id", nullable = false)
+    private Long examId;
+
+    @Column(nullable = false, length = 200)
+    private String title;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "duration_minutes", nullable = false)
+    private Integer durationMinutes;
+
+    @Column(name = "total_questions", nullable = false)
+    private Integer totalQuestions;
+
+    @Column(name = "total_marks", nullable = false, precision = 8, scale = 2)
+    private BigDecimal totalMarks;
+
+    @Column(name = "negative_marks", nullable = false, precision = 5, scale = 2)
+    private BigDecimal negativeMarks = BigDecimal.ZERO;
+
+    @Column(name = "is_published", nullable = false)
+    private Boolean isPublished = false;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exam_id", insertable = false, updatable = false)
+    private Exam exam;
+}
