@@ -1,0 +1,3 @@
+# Flyway migrations will be placed here
+# Format: V{version}__{description}.sql
+# Example: V1__create_users.sql

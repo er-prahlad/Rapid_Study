@@ -1,0 +1,3 @@
+# Database migrations and seed data
+# Migrations are in backend/src/main/resources/db/migration/
+# This folder can contain additional database-related scripts

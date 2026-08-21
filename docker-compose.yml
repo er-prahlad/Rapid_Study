@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: rapidstudy-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-rapidstudy}
+      MYSQL_USER: ${DB_USERNAME:-rapidstudy_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - rapidstudy-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: rapidstudy-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - rapidstudy-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  rapidstudy-network:
+    driver: bridge

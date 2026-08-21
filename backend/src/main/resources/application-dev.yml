@@ -1,0 +1,21 @@
+spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+  
+  devtools:
+    restart:
+      enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.rapidstudy: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+
+# Development-specific settings
+app:
+  cors:
+    allowed-origins: http://localhost:3000,http://localhost:3001

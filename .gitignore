@@ -1,0 +1,96 @@
+# RapidStudy - Git Ignore
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Operating System
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.iml
+
+# Backend (Java/Spring Boot)
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/.mvn/wrapper/maven-wrapper.properties
+backend/HELP.md
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+frontend/.turbo/
+frontend/*.log
+
+# Admin (Next.js)
+admin/node_modules/
+admin/.next/
+admin/out/
+admin/build/
+admin/dist/
+admin/.turbo/
+admin/*.log
+
+# Android
+android/.gradle/
+android/.idea/
+android/local.properties
+android/build/
+android/app/build/
+android/captures/
+android/*.apk
+android/*.aab
+android/.cxx/
+android/.externalNativeBuild/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Docker
+docker/mysql/data/
+docker/redis/data/
+
+# Testing
+coverage/
+*.cover
+.pytest_cache/
+.coverage
+
+# Misc
+.cache/
+temp/
+tmp/
+*.tmp
+*.bak
+*.backup
+
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

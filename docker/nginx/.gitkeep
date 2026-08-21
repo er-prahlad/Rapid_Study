@@ -1,0 +1,3 @@
+# Nginx configuration and SSL certificates will be placed here
+# nginx.conf
+# ssl/
