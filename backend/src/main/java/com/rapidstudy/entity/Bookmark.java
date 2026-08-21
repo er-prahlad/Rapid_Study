@@ -13,11 +13,11 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "bookmarks", indexes = {
-    @Index(name = "idx_bookmarks_user_id", columnList = "userId"),
-    @Index(name = "idx_bookmarks_question_id", columnList = "questionId"),
-    @Index(name = "idx_bookmarks_created_at", columnList = "createdAt")
+    @Index(name = "idx_bookmarks_user_id", columnList = "user_id"),
+    @Index(name = "idx_bookmarks_question_id", columnList = "question_id"),
+    @Index(name = "idx_bookmarks_created_at", columnList = "created_at")
 }, uniqueConstraints = {
-    @UniqueConstraint(name = "unique_user_question", columnNames = {"userId", "questionId"})
+    @UniqueConstraint(name = "unique_user_question", columnNames = {"user_id", "question_id"})
 })
 @Data
 @NoArgsConstructor

@@ -18,8 +18,8 @@ import java.time.LocalDateTime;
 @Table(name = "users", indexes = {
     @Index(name = "idx_users_email", columnList = "email"),
     @Index(name = "idx_users_role", columnList = "role"),
-    @Index(name = "idx_users_is_active", columnList = "isActive"),
-    @Index(name = "idx_users_created_at", columnList = "createdAt")
+    @Index(name = "idx_users_is_active", columnList = "is_active"),
+    @Index(name = "idx_users_created_at", columnList = "created_at")
 })
 @Data
 @NoArgsConstructor

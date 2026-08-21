@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Table(name = "mock_test_questions", indexes = {
-    @Index(name = "idx_mock_test_questions_test_id", columnList = "mockTestId"),
-    @Index(name = "idx_mock_test_questions_question_id", columnList = "questionId")
+    @Index(name = "idx_mock_test_questions_test_id", columnList = "mock_test_id"),
+    @Index(name = "idx_mock_test_questions_question_id", columnList = "question_id")
 }, uniqueConstraints = {
-    @UniqueConstraint(name = "unique_test_question", columnNames = {"mockTestId", "questionId"})
+    @UniqueConstraint(name = "unique_test_question", columnNames = {"mock_test_id", "question_id"})
 })
 @Data
 @NoArgsConstructor

@@ -17,10 +17,10 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "questions", indexes = {
-    @Index(name = "idx_questions_topic_id", columnList = "topicId"),
+    @Index(name = "idx_questions_topic_id", columnList = "topic_id"),
     @Index(name = "idx_questions_difficulty", columnList = "difficulty"),
-    @Index(name = "idx_questions_is_active", columnList = "isActive"),
-    @Index(name = "idx_questions_question_type", columnList = "questionType")
+    @Index(name = "idx_questions_is_active", columnList = "is_active"),
+    @Index(name = "idx_questions_question_type", columnList = "question_type")
 })
 @Data
 @NoArgsConstructor
