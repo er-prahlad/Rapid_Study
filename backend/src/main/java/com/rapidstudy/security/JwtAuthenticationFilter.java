@@ -1,15 +1,15 @@
 package com.rapidstudy.security;
 
+import com.rapidstudy.enums.Role;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -17,56 +17,75 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * JWT authentication filter that intercepts requests and validates JWT tokens
+ * Runs once per request.
+ *
+ * Reads the Bearer token from the Authorization header, validates it,
+ * and sets an AuthenticatedUserPrincipal in the SecurityContext so
+ * downstream code has typed access to userId / email / role.
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
 
     @Override
     protected void doFilterInternal(
-            @NonNull HttpServletRequest request,
+            @NonNull HttpServletRequest  request,
             @NonNull HttpServletResponse response,
-            @NonNull FilterChain filterChain) throws ServletException, IOException {
-        
-        final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
+            @NonNull FilterChain         filterChain) throws ServletException, IOException {
 
-        // Check if Authorization header exists and starts with "Bearer "
+        final String authHeader = request.getHeader("Authorization");
+
+        // No bearer token — pass through unauthenticated
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // Extract JWT token from header
-        jwt = authHeader.substring(7);
-        
+        final String jwt = authHeader.substring(7);
+
         try {
-            // Extract username (email) from JWT token
-            userEmail = jwtService.extractUsername(jwt);
+            // Only process if no authentication is set yet
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            // If username exists and user is not already authenticated
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+                String email  = jwtService.extractUsername(jwt);
+                Long   userId = jwtService.extractUserId(jwt);
+                String roleStr = jwtService.extractRole(jwt);
 
-                // Validate token
-                if (jwtService.isTokenValid(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails,
-                            null,
-                            userDetails.getAuthorities()
-                    );
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                if (email != null && userId != null && roleStr != null) {
+                    // Parse role safely; unknown roles get treated as STUDENT
+                    Role role;
+                    try {
+                        role = Role.valueOf(roleStr);
+                    } catch (IllegalArgumentException ex) {
+                        log.warn("Unknown role in JWT: {}", roleStr);
+                        role = Role.STUDENT;
+                    }
+
+                    AuthenticatedUserPrincipal principal =
+                            new AuthenticatedUserPrincipal(userId, email, role);
+
+                    // Validate token against the principal's username
+                    if (jwtService.isTokenValid(jwt, principal)) {
+                        UsernamePasswordAuthenticationToken authToken =
+                                new UsernamePasswordAuthenticationToken(
+                                        principal,
+                                        null,
+                                        principal.getAuthorities());
+
+                        authToken.setDetails(
+                                new WebAuthenticationDetailsSource().buildDetails(request));
+
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
                 }
             }
-        } catch (Exception e) {
-            // Log and continue - let security context handle unauthorized access
-            logger.error("Cannot set user authentication: {}", e);
+        } catch (Exception ex) {
+            // Invalid/expired tokens are silently skipped;
+            // the request continues and Spring Security will return 401
+            log.debug("JWT validation failed for request {}: {}", request.getRequestURI(), ex.getMessage());
         }
 
         filterChain.doFilter(request, response);

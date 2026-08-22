@@ -4,6 +4,7 @@ import com.rapidstudy.dto.auth.AuthResponse;
 import com.rapidstudy.dto.auth.LoginRequest;
 import com.rapidstudy.dto.auth.RefreshTokenRequest;
 import com.rapidstudy.dto.auth.RegisterRequest;
+import com.rapidstudy.dto.auth.UserProfileResponse;
 import com.rapidstudy.entity.User;
 import com.rapidstudy.enums.Role;
 import com.rapidstudy.exception.ConflictException;
@@ -11,119 +12,150 @@ import com.rapidstudy.exception.UnauthorizedException;
 import com.rapidstudy.repository.UserRepository;
 import com.rapidstudy.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Service for authentication operations
+ * Authentication business logic.
+ *
+ * Handles registration, login, token refresh, and profile retrieval.
+ * Tokens embed userId + role so downstream services don't need extra DB calls.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
+    private final UserRepository        userRepository;
+    private final PasswordEncoder       passwordEncoder;
+    private final JwtService            jwtService;
     private final AuthenticationManager authenticationManager;
-    private final UserDetailsService userDetailsService;
 
-    /**
-     * Register a new user
-     */
+    // ---------------------------------------------------------------
+    // Register
+    // ---------------------------------------------------------------
+
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        // Check if user already exists
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new ConflictException("Email already registered");
+            throw new ConflictException("Email is already registered");
         }
 
-        // Create new user
         User user = new User();
         user.setName(request.getName());
-        user.setEmail(request.getEmail());
+        user.setEmail(request.getEmail().toLowerCase().trim());
         user.setPhone(request.getPhone());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.STUDENT);
-        user.setLanguage(request.getLanguage());
+        user.setLanguage(request.getLanguage() != null
+                ? request.getLanguage()
+                : com.rapidstudy.enums.Language.EN);
         user.setIsActive(true);
 
-        User savedUser = userRepository.save(user);
+        User saved = userRepository.save(user);
+        log.info("New user registered: id={} email={}", saved.getId(), saved.getEmail());
 
-        // Generate tokens
-        UserDetails userDetails = userDetailsService.loadUserByUsername(savedUser.getEmail());
-        String accessToken = jwtService.generateToken(userDetails);
-        String refreshToken = jwtService.generateRefreshToken(userDetails);
-
-        return buildAuthResponse(savedUser, accessToken, refreshToken);
+        return buildAuthResponse(saved);
     }
 
-    /**
-     * Authenticate user and return tokens
-     */
+    // ---------------------------------------------------------------
+    // Login
+    // ---------------------------------------------------------------
+
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        // Authenticate user
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
-
-        // Get user details
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new UnauthorizedException("Invalid credentials"));
-
-        if (!user.getIsActive()) {
-            throw new UnauthorizedException("Account is deactivated");
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getEmail().toLowerCase().trim(),
+                            request.getPassword()));
+        } catch (BadCredentialsException ex) {
+            // Do not leak whether email or password was wrong
+            throw new UnauthorizedException("Invalid email or password");
         }
 
-        // Generate tokens
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String accessToken = jwtService.generateToken(userDetails);
-        String refreshToken = jwtService.generateRefreshToken(userDetails);
+        User user = userRepository.findByEmail(request.getEmail().toLowerCase().trim())
+                .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
-        return buildAuthResponse(user, accessToken, refreshToken);
+        if (!user.getIsActive()) {
+            throw new UnauthorizedException("Your account has been deactivated");
+        }
+
+        log.info("User logged in: id={} email={}", user.getId(), user.getEmail());
+        return buildAuthResponse(user);
     }
 
-    /**
-     * Refresh access token using refresh token
-     */
+    // ---------------------------------------------------------------
+    // Refresh token
+    // ---------------------------------------------------------------
+
     @Transactional(readOnly = true)
     public AuthResponse refreshToken(RefreshTokenRequest request) {
-        String refreshToken = request.getRefreshToken();
+        String token = request.getRefreshToken();
 
-        // Extract username from refresh token
-        String userEmail = jwtService.extractUsername(refreshToken);
-        
-        if (userEmail == null) {
+        String email = jwtService.extractUsername(token);
+        if (email == null) {
             throw new UnauthorizedException("Invalid refresh token");
         }
 
-        // Load user details
-        UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-
-        // Validate refresh token
-        if (!jwtService.isTokenValid(refreshToken, userDetails)) {
-            throw new UnauthorizedException("Invalid or expired refresh token");
-        }
-
-        // Get user
-        User user = userRepository.findByEmail(userEmail)
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
 
-        // Generate new access token
-        String newAccessToken = jwtService.generateToken(userDetails);
+        // Validate the refresh token against a minimal UserDetails
+        org.springframework.security.core.userdetails.User springUser =
+                new org.springframework.security.core.userdetails.User(
+                        user.getEmail(), user.getPasswordHash(), java.util.Collections.emptyList());
 
-        return buildAuthResponse(user, newAccessToken, refreshToken);
+        if (!jwtService.isTokenValid(token, springUser)) {
+            throw new UnauthorizedException("Refresh token is invalid or expired");
+        }
+
+        // Issue new access token; re-use the same refresh token
+        String newAccessToken  = jwtService.generateToken(user);
+        String newRefreshToken = jwtService.generateRefreshToken(user);
+
+        log.info("Token refreshed for user: id={}", user.getId());
+        return buildAuthResponse(user, newAccessToken, newRefreshToken);
     }
 
-    /**
-     * Build authentication response
-     */
+    // ---------------------------------------------------------------
+    // Current user profile
+    // ---------------------------------------------------------------
+
+    @Transactional(readOnly = true)
+    public UserProfileResponse getProfile(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UnauthorizedException("User not found"));
+
+        return UserProfileResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .profileImage(user.getProfileImage())
+                .role(user.getRole())
+                .language(user.getLanguage())
+                .isActive(user.getIsActive())
+                .createdAt(user.getCreatedAt())
+                .build();
+    }
+
+    // ---------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------
+
+    private AuthResponse buildAuthResponse(User user) {
+        return buildAuthResponse(
+                user,
+                jwtService.generateToken(user),
+                jwtService.generateRefreshToken(user));
+    }
+
     private AuthResponse buildAuthResponse(User user, String accessToken, String refreshToken) {
         return AuthResponse.builder()
                 .accessToken(accessToken)

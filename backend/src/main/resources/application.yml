@@ -62,8 +62,11 @@ management:
 # Application specific properties
 app:
   jwt:
-    secret: ${JWT_SECRET:rapidstudy_secret_key_minimum_32_characters_for_security}
+    # Default is a dev-only key. ALWAYS override JWT_SECRET in production via environment variable.
+    secret: ${JWT_SECRET:PMPELjzFqjWf5xGXhCpzYKlKrALgi6HAQFGaf+yDSTyQx6fx6U4NtUmF9JYb6fPB}
+    # Access token: 24 hours (ms)
     expiration: ${JWT_EXPIRATION:86400000}
+    # Refresh token: 7 days (ms)
     refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
   
   cors:

@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/rapidstudy?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    username: root
-    password:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:rapidstudy}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:rapidstudy_user}
+    password: ${DB_PASSWORD:password}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -21,7 +21,6 @@ logging:
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
 
-# Development-specific settings
 app:
   cors:
     allowed-origins: http://localhost:3000,http://localhost:3001
