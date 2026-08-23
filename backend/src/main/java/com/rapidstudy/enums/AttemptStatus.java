@@ -1,10 +1,13 @@
 package com.rapidstudy.enums;
 
 /**
- * Test attempt status
+ * Test attempt status.
+ * IN_PROGRESS  — test is ongoing
+ * COMPLETED    — test was submitted by the student
+ * ABANDONED    — test was abandoned or expired
  */
 public enum AttemptStatus {
-    IN_PROGRESS,  // Test is ongoing
-    SUBMITTED,    // Test completed and submitted
-    EXPIRED       // Test time expired
+    IN_PROGRESS,
+    COMPLETED,
+    ABANDONED
 }

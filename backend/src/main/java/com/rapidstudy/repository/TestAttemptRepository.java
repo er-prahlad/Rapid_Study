@@ -5,6 +5,7 @@ import com.rapidstudy.enums.AttemptStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,14 +16,37 @@ import java.util.Optional;
  */
 @Repository
 public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> {
-    
+
     Page<TestAttempt> findByUserId(Long userId, Pageable pageable);
-    
+
     Page<TestAttempt> findByUserIdAndStatus(Long userId, AttemptStatus status, Pageable pageable);
-    
+
     Optional<TestAttempt> findByIdAndUserId(Long id, Long userId);
-    
+
     List<TestAttempt> findByMockTestId(Long mockTestId);
-    
+
+    long countByUserId(Long userId);
+
     long countByUserIdAndStatus(Long userId, AttemptStatus status);
+
+    /**
+     * Mini-leaderboard: top users ranked by average score percentage.
+     * Returns rows: [userId, name, avgScorePct, avgAccuracy, testCount]
+     */
+    @Query("""
+        SELECT
+            u.id,
+            u.name,
+            AVG(CASE WHEN a.totalMarks > 0 THEN a.score / a.totalMarks * 100 ELSE 0 END),
+            AVG(CASE WHEN (a.correctAnswers + a.wrongAnswers + a.unanswered) > 0
+                     THEN a.correctAnswers * 100.0 / (a.correctAnswers + a.wrongAnswers + a.unanswered)
+                     ELSE 0 END),
+            COUNT(a.id)
+        FROM TestAttempt a
+        JOIN a.user u
+        WHERE a.status = com.rapidstudy.enums.AttemptStatus.COMPLETED
+        GROUP BY u.id, u.name
+        ORDER BY 3 DESC
+        """)
+    List<Object[]> findTopUsersByScore(Pageable pageable);
 }

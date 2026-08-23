@@ -38,5 +38,6 @@ public class RegisterRequest {
     )
     private String password;
 
+    @Builder.Default
     private Language language = Language.EN;
 }
