@@ -67,7 +67,7 @@ SET MAVEN_PROJECTBASEDIR=%~dp0
 set WRAPPER_JAR="%MAVEN_PROJECTBASEDIR%.mvn\wrapper\maven-wrapper.jar"
 set WRAPPER_LAUNCHER=org.apache.maven.wrapper.MavenWrapperMain
 
-%JAVA_HOME%\bin\java.exe %MAVEN_OPTS% -classpath %WRAPPER_JAR% %WRAPPER_LAUNCHER% %*
+"%JAVA_HOME%\bin\java.exe" %MAVEN_OPTS% -Dmaven.multiModuleProjectDirectory="%MAVEN_PROJECTBASEDIR:~0,-1%" -classpath %WRAPPER_JAR% %WRAPPER_LAUNCHER% %*
 if ERRORLEVEL 1 goto error
 goto end
 

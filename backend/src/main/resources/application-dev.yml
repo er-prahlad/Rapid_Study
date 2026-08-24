@@ -1,8 +1,9 @@
 spring:
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:rapidstudy}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    # Dev only: using root for simplicity. Change to dedicated user in prod.
     username: ${DB_USERNAME:rapidstudy_user}
-    password: ${DB_PASSWORD:password}
+    password: ${DB_PASSWORD:rapidstudy_password}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:

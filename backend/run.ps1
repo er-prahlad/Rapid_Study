@@ -1,31 +1,17 @@
-# RapidStudy Backend Run Script
+# RapidStudy Backend - Start Server
+# Run this from the backend/ directory
 
-$ErrorActionPreference = "Stop"
+$env:JAVA_HOME = "C:\Java\jdk21"
+$env:Path = "C:\Java\jdk21\bin;$env:Path"
 
-Write-Host "================================" -ForegroundColor Cyan
-Write-Host " RapidStudy Backend Server" -ForegroundColor Cyan
-Write-Host "================================" -ForegroundColor Cyan
-Write-Host ""
+$mvn = "C:\Users\acer\.m2\wrapper\dists\apache-maven-3.9.6-bin\3311e1d4\apache-maven-3.9.6\bin\mvn.cmd"
 
-# Set JAVA_HOME
-$env:JAVA_HOME = "C:\Program Files\Java\jdk-21"
-Write-Host "JAVA_HOME: $env:JAVA_HOME" -ForegroundColor Green
+Write-Host "================================"
+Write-Host " RapidStudy Backend Starting..."
+Write-Host " URL: http://localhost:8080"
+Write-Host " Swagger: http://localhost:8080/swagger-ui.html"
+Write-Host " Press Ctrl+C to stop"
+Write-Host "================================"
 
-# Verify Java
-if (Test-Path "$env:JAVA_HOME\bin\java.exe") {
-    Write-Host "✓ Java found" -ForegroundColor Green
-} else {
-    Write-Host "✗ Java not found at $env:JAVA_HOME" -ForegroundColor Red
-    exit 1
-}
-
-Write-Host ""
-Write-Host "Starting backend server..." -ForegroundColor Yellow
-Write-Host "API will be available at: http://localhost:8080" -ForegroundColor Cyan
-Write-Host "Swagger UI will be at: http://localhost:8080/swagger-ui.html" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "Press Ctrl+C to stop the server" -ForegroundColor Gray
-Write-Host ""
-
-# Run Spring Boot
-.\mvnw.cmd spring-boot:run
+Set-Location $PSScriptRoot
+& $mvn spring-boot:run
