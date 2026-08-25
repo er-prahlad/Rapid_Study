@@ -1,7 +1,7 @@
 # RapidStudy - Task Status
 
 ## Current Phase
-**PHASE 15: DASHBOARD** - ✅ COMPLETED
+**PHASE 17: ADMIN EXAM MANAGEMENT** - ✅ COMPLETED
 
 ---
 
@@ -122,11 +122,18 @@ cd frontend; npm run build
 docker exec rapidstudy-redis redis-cli ping
 ```
 
+#### PHASE 16: Exam Module ✅
+**Completed:** 2026-08-23
+**Summary:** ExamService, ExamController (GET /api/v1/exams, /{id}, /{id}/subjects, /{id}/tests). Paginated search, exam detail with subjects+topics, published tests per exam. Frontend: /exams page with search/grid, /exams/[id] with accordion subjects and test cards.
+
+#### PHASE 17: Admin Exam Management ✅
+**Completed:** 2026-08-23
+**Summary:** AdminExamController with full CRUD for exams (create/update/activate/deactivate), subjects (create/update/delete), topics (create/update/delete). @PreAuthorize("hasRole('ADMIN')") on all routes. Frontend: /admin/exams page with search, create/edit dialog, activate/deactivate toggle.
+
 ---
 
 ## Next Phase
-
-**PHASE 16: Exam Module**
+**PHASE 18: Question Bank**
 - GET /api/v1/exams (paginated list)
 - GET /api/v1/exams/{id}
 - GET /api/v1/exams/{id}/subjects
