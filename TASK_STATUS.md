@@ -1,7 +1,7 @@
 # RapidStudy - Task Status
 
 ## Current Phase
-**PHASE 17: ADMIN EXAM MANAGEMENT** - ✅ COMPLETED
+**PHASE 22: TEST INSTRUCTIONS** - ✅ COMPLETED
 
 ---
 
@@ -122,18 +122,58 @@ cd frontend; npm run build
 docker exec rapidstudy-redis redis-cli ping
 ```
 
-#### PHASE 16: Exam Module ✅
-**Completed:** 2026-08-23
-**Summary:** ExamService, ExamController (GET /api/v1/exams, /{id}, /{id}/subjects, /{id}/tests). Paginated search, exam detail with subjects+topics, published tests per exam. Frontend: /exams page with search/grid, /exams/[id] with accordion subjects and test cards.
+#### PHASE 18: Question Bank ✅
+**Completed:** 2026-08-26
+**Summary:** QuestionService (CRUD + safe/full DTOs), AdminQuestionController (GET/POST/PUT/PATCH with filters), QuestionController (/practice/questions, safe DTOs — no answers). Frontend: /practice page (interactive MCQ), /admin/questions (table, create dialog, activate/deactivate).
 
-#### PHASE 17: Admin Exam Management ✅
-**Completed:** 2026-08-23
-**Summary:** AdminExamController with full CRUD for exams (create/update/activate/deactivate), subjects (create/update/delete), topics (create/update/delete). @PreAuthorize("hasRole('ADMIN')") on all routes. Frontend: /admin/exams page with search, create/edit dialog, activate/deactivate toggle.
+#### PHASE 19: Question Import ✅
+**Completed:** 2026-08-26
+**Summary:** CSV + XLSX import via Apache POI. Validates topicId, question text, correctOption (1-4), duplicate detection. Returns ImportResultDto (totalRows, imported, failed, duplicates, errors[]). Frontend: import dialog with file upload + result summary.
+
+#### PHASE 20: Mock Test Builder ✅
+**Completed:** 2026-08-26
+**Summary:** MockTestService + AdminMockTestController. CRUD for tests (create/update/delete draft). Question add (manual/random/topic/difficulty-based). Publish/Unpublish with validation (must have questions). Frontend: /admin/tests page with create dialog, publish/unpublish toggle.
+
+#### PHASE 21: Mock Test List ✅
+**Completed:** 2026-08-26
+**Summary:** MockTestController (GET /api/v1/tests, GET /api/v1/tests/{id}). Frontend: /tests page with search, exam filter, stat cards (Qs/Marks/Duration/Negative marking), Start Test button.
+
+#### PHASE 22: Test Instructions ✅
+**Completed:** 2026-08-26
+**Summary:** Frontend /tests/[id]/instructions page. Shows test name, stats (4 stat boxes), marking scheme (+correct/-wrong/0 skip), numbered instruction list, START TEST button.
+
+---
+
+## New Backend Files (Phase 18-22)
+- service/QuestionService.java (CRUD + CSV/XLSX import)
+- service/MockTestService.java (test builder + question management)
+- controller/QuestionController.java (student practice)
+- controller/AdminQuestionController.java (admin CRUD + import)
+- controller/MockTestController.java (student test list + instructions)
+- controller/AdminMockTestController.java (admin test builder)
+- dto/question/: QuestionDto, QuestionSafeDto, OptionDto, OptionRequest, QuestionRequest, ImportResultDto
+- dto/mocktest/: MockTestDto, MockTestRequest, AddQuestionsRequest
+- repository/QuestionRepository.java (upgraded: findFiltered JPQL, findRandomByTopicAndDifficulty)
+- repository/MockTestRepository.java (upgraded: findAllFiltered, findPublishedFiltered)
+- repository/MockTestQuestionRepository.java (upgraded: deleteByMockTestId)
+
+## New Frontend Files (Phase 18-22)
+- app/(app)/practice/page.tsx — interactive practice questions
+- app/(app)/tests/page.tsx — published test listing with filters
+- app/(app)/tests/[id]/instructions/page.tsx — test instructions
+- app/(app)/admin/questions/page.tsx — question bank management
+- app/(app)/admin/tests/page.tsx — mock test builder
+- services/mockTestApi.ts
+- Total pages: 28
+
+## Build Status
+- Backend: 105 files, BUILD SUCCESS (0 errors)
+- Frontend: 28 pages, BUILD SUCCESS (0 errors)
 
 ---
 
 ## Next Phase
-**PHASE 18: Question Bank**
+**PHASE 23: Test Attempt Engine**
 - GET /api/v1/exams (paginated list)
 - GET /api/v1/exams/{id}
 - GET /api/v1/exams/{id}/subjects

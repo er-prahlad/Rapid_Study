@@ -78,7 +78,9 @@ public class SecurityConfig {
                 // ── READ-ONLY PUBLIC exam/test browsing ──────────────────
                 .requestMatchers(HttpMethod.GET,
                         "/api/v1/exams",
-                        "/api/v1/exams/**"
+                        "/api/v1/exams/**",
+                        "/api/v1/tests",
+                        "/api/v1/tests/**"
                 ).permitAll()
 
                 // ── ADMIN ONLY ───────────────────────────────────────────
