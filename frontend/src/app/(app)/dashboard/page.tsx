@@ -24,36 +24,50 @@ export default function DashboardPage() {
 
   if (isLoading) return <DashboardSkeleton />;
 
-  // Show graceful fallback if backend not yet returning dashboard data
   const dashboard = data?.data;
 
   return (
     <div className="space-y-6">
       {/* Welcome */}
-      <WelcomeSection user={user} streak={dashboard?.stats?.currentStreak ?? 0} />
+      <WelcomeSection
+        user={user}
+        streak={dashboard?.stats?.currentStreak ?? 0}
+      />
 
       {/* Stats row */}
       <StatsRow stats={dashboard?.stats} />
+
+      {/* Popular Exams — immediately below Stats */}
+      <PopularExams exams={dashboard?.popularExams ?? []} />
 
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left — 2 cols */}
         <div className="lg:col-span-2 space-y-6">
           <DailyTargetCard target={dashboard?.dailyTarget} />
-          <PerformanceChart subjectPerformance={dashboard?.subjectPerformance ?? []} />
-          <RecentAttempts attempts={dashboard?.recentAttempts ?? []} />
+
+          <PerformanceChart
+            subjectPerformance={dashboard?.subjectPerformance ?? []}
+          />
+
+          <RecentAttempts
+            attempts={dashboard?.recentAttempts ?? []}
+          />
         </div>
 
         {/* Right — 1 col */}
         <div className="space-y-6">
           <QuickActions />
-          <UpcomingTests tests={dashboard?.upcomingTests ?? []} />
-          <LeaderboardWidget entries={dashboard?.leaderboard ?? []} />
+
+          <UpcomingTests
+            tests={dashboard?.upcomingTests ?? []}
+          />
+
+          <LeaderboardWidget
+            entries={dashboard?.leaderboard ?? []}
+          />
         </div>
       </div>
-
-      {/* Popular Exams — full width */}
-      <PopularExams exams={dashboard?.popularExams ?? []} />
     </div>
   );
 }

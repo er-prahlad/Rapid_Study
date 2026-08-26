@@ -1,7 +1,7 @@
 # RapidStudy - Task Status
 
 ## Current Phase
-**PHASE 22: TEST INSTRUCTIONS** - ✅ COMPLETED
+**PHASE 25: QUESTION NAVIGATION** - ✅ COMPLETED
 
 ---
 
@@ -122,7 +122,49 @@ cd frontend; npm run build
 docker exec rapidstudy-redis redis-cli ping
 ```
 
-#### PHASE 18: Question Bank ✅
+#### PHASE 23: Test Attempt Engine ✅
+**Completed:** 2026-08-26
+**Summary:** TestAttemptService.startAttempt() creates attempt with server-set expiresAt. Validates published test, prevents duplicate in-progress attempts. Returns questions via QuestionSafeDto (NO correct answers). TestAttemptController: POST /api/v1/tests/{testId}/attempts.
+
+#### PHASE 24: Server-Authoritative Timer ✅
+**Completed:** 2026-08-26
+**Summary:** expiresAt set by backend (now + durationMinutes). validateAttemptActive() checks server time on every answer call. isExpired() used at submission. Frontend useServerTimer hook counts down to server expiresAt — display only. Visual warning at <5min, critical at <1min.
+
+#### PHASE 25: Question Navigation ✅
+**Completed:** 2026-08-26
+**Summary:** Full test attempt UI at /attempt/[id]. Actions: Previous, Next, Save Answer, Clear Answer, Mark for Review, Save & Next, Submit. Question palette sidebar shows all 5 states (NOT_VISITED, VISITED, ANSWERED, MARKED_FOR_REVIEW, ANSWERED_AND_MARKED) with color coding. toggleReview() endpoint. Stats: answered/not-answered/flagged counts.
+
+---
+
+## New Backend Files (Phase 23-25)
+- service/TestAttemptService.java (attempt engine + security contracts)
+- controller/TestAttemptController.java (6 endpoints)
+- dto/attempt/StartAttemptResponse.java
+- dto/attempt/AttemptStatusResponse.java
+- dto/attempt/QuestionStateDto.java
+- dto/attempt/SaveAnswerRequest.java
+- dto/attempt/SaveAnswerResponse.java
+- repository/TestAttemptRepository.java (+ existsByUserIdAndMockTestIdAndStatus)
+- repository/AttemptAnswerRepository.java (+ deleteByAttemptIdAndQuestionId)
+- Total backend: 112 files, BUILD SUCCESS
+
+## New Frontend Files (Phase 23-25)
+- app/(app)/attempt/[attemptId]/page.tsx — full test engine UI
+- services/attemptApi.ts
+- hooks/use-server-timer.ts
+
+## Security Contracts
+- Correct answers NEVER returned during active test
+- expiresAt always set by server, never by client
+- userId always from JWT, never from request body
+- Attempt ownership verified on every API call
+- Duplicate in-progress attempts rejected
+- Expired attempts cannot receive answers
+
+---
+
+## Next Phase
+**PHASE 26: Save Answer (complete) + PHASE 27: Review + Clear + PHASE 28: Test Submission + Scoring**
 **Completed:** 2026-08-26
 **Summary:** QuestionService (CRUD + safe/full DTOs), AdminQuestionController (GET/POST/PUT/PATCH with filters), QuestionController (/practice/questions, safe DTOs — no answers). Frontend: /practice page (interactive MCQ), /admin/questions (table, create dialog, activate/deactivate).
 

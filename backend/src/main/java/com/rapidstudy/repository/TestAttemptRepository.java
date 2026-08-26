@@ -6,14 +6,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Repository for TestAttempt entity
- */
 @Repository
 public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> {
 
@@ -29,24 +27,20 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> 
 
     long countByUserIdAndStatus(Long userId, AttemptStatus status);
 
-    /**
-     * Mini-leaderboard: top users ranked by average score percentage.
-     * Returns rows: [userId, name, avgScorePct, avgAccuracy, testCount]
-     */
+    /** Prevent duplicate in-progress attempts for the same test */
+    boolean existsByUserIdAndMockTestIdAndStatus(Long userId, Long mockTestId, AttemptStatus status);
+
+    /** Mini-leaderboard — top users by avg score % */
     @Query("""
-        SELECT
-            u.id,
-            u.name,
+        SELECT u.id, u.name,
             AVG(CASE WHEN a.totalMarks > 0 THEN a.score / a.totalMarks * 100 ELSE 0 END),
             AVG(CASE WHEN (a.correctAnswers + a.wrongAnswers + a.unanswered) > 0
                      THEN a.correctAnswers * 100.0 / (a.correctAnswers + a.wrongAnswers + a.unanswered)
                      ELSE 0 END),
             COUNT(a.id)
-        FROM TestAttempt a
-        JOIN a.user u
+        FROM TestAttempt a JOIN a.user u
         WHERE a.status = com.rapidstudy.enums.AttemptStatus.COMPLETED
-        GROUP BY u.id, u.name
-        ORDER BY 3 DESC
+        GROUP BY u.id, u.name ORDER BY 3 DESC
         """)
     List<Object[]> findTopUsersByScore(Pageable pageable);
 }
