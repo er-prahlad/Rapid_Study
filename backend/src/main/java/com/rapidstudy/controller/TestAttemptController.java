@@ -1,7 +1,9 @@
 package com.rapidstudy.controller;
 
 import com.rapidstudy.dto.ApiResponse;
+import com.rapidstudy.dto.analysis.AttemptAnalysisResponse;
 import com.rapidstudy.dto.attempt.*;
+import com.rapidstudy.service.AnalysisService;
 import com.rapidstudy.service.TestAttemptService;
 import com.rapidstudy.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,6 +41,7 @@ import org.springframework.web.bind.annotation.*;
 public class TestAttemptController {
 
     private final TestAttemptService attemptService;
+    private final AnalysisService    analysisService;
 
     // ── Start a new attempt (Phase 23) ────────────────────────────────
 
@@ -154,5 +157,18 @@ public class TestAttemptController {
         Long userId = SecurityUtil.currentUserId();
         ResultResponse response = attemptService.getResult(id, userId);
         return ResponseEntity.ok(ApiResponse.success("Result retrieved", response));
+    }
+
+    // ── Detailed analysis (Phase 30) ──────────────────────────────────
+
+    @GetMapping("/api/v1/attempts/{id}/analysis")
+    @Operation(
+        summary = "Get detailed analysis for a submitted attempt",
+        description = "Returns subject, topic, difficulty, and time breakdowns.")
+    public ResponseEntity<ApiResponse<AttemptAnalysisResponse>> getAnalysis(
+            @PathVariable Long id) {
+        Long userId = SecurityUtil.currentUserId();
+        AttemptAnalysisResponse response = analysisService.getAttemptAnalysis(id, userId);
+        return ResponseEntity.ok(ApiResponse.success("Analysis retrieved", response));
     }
 }

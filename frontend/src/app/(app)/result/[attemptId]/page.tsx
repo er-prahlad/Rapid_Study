@@ -318,8 +318,11 @@ export default function ResultPage({ params }: { params: { attemptId: string } }
         <Button variant="outline" asChild className="flex-1">
           <Link href="/tests"><ArrowLeft className="h-4 w-4 mr-2" />All Tests</Link>
         </Button>
+        <Button variant="outline" asChild className="flex-1">
+          <Link href={`/analysis/${attemptId}`}><BarChart2 className="h-4 w-4 mr-2" />Full Analysis</Link>
+        </Button>
         <Button asChild className="flex-1">
-          <Link href="/dashboard">Back to Dashboard</Link>
+          <Link href="/dashboard">Dashboard</Link>
         </Button>
       </div>
     </div>

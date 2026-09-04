@@ -105,6 +105,89 @@ export interface ResultResponse {
   questions:        QuestionResultDto[];
 }
 
+// Phase 30 — Detailed Analysis
+export interface SubjectAnalysis {
+  subjectName:   string;
+  total:         number;
+  correct:       number;
+  wrong:         number;
+  skipped:       number;
+  accuracy:      number;
+  scoreObtained: number;
+  totalMarks:    number;
+}
+
+export interface TopicAnalysis {
+  topicName:   string;
+  subjectName: string;
+  total:       number;
+  correct:     number;
+  wrong:       number;
+  skipped:     number;
+  accuracy:    number;
+}
+
+export interface DifficultyAnalysis {
+  difficulty: string;
+  total:      number;
+  correct:    number;
+  wrong:      number;
+  skipped:    number;
+  accuracy:   number;
+}
+
+export interface TimeAnalysis {
+  totalDurationSeconds:   number;
+  timeTakenSeconds:       number;
+  timeRemainingSeconds:   number;
+  avgSecondsPerQuestion:  number;
+  questionsAttempted:     number;
+  questionsSkipped:       number;
+}
+
+export interface AnalysisResponse {
+  attemptId:         number;
+  testTitle:         string;
+  score:             number;
+  totalMarks:        number;
+  percentage:        number;
+  accuracy:          number;
+  correctAnswers:    number;
+  wrongAnswers:      number;
+  unanswered:        number;
+  subjectAnalysis:   SubjectAnalysis[];
+  topicAnalysis:     TopicAnalysis[];
+  difficultyAnalysis:DifficultyAnalysis[];
+  timeAnalysis:      TimeAnalysis;
+}
+
+// Phase 31 — Performance
+export interface ScoreHistory {
+  attemptId:   number;
+  testTitle:   string;
+  score:       number;
+  totalMarks:  number;
+  percentage:  number;
+  accuracy:    number;
+  submittedAt: string;
+}
+
+export interface PerformanceResponse {
+  testsAttempted:          number;
+  testsCompleted:          number;
+  averageScore:            number;
+  averageAccuracy:         number;
+  bestScore:               number;
+  totalQuestionsAttempted: number;
+  totalCorrect:            number;
+  totalWrong:              number;
+  currentStreak:           number;
+  longestStreak:           number;
+  scoreHistory:            ScoreHistory[];
+  subjectPerformance:      SubjectAnalysis[];
+  difficultyBreakdown:     DifficultyAnalysis[];
+}
+
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 export const attemptApi = {
@@ -152,5 +235,11 @@ export const attemptApi = {
   getResult: (attemptId: number) =>
     apiClient
       .get<ApiResponse<ResultResponse>>(`/attempts/${attemptId}/result`)
+      .then(r => r.data),
+
+  // Phase 30: Detailed analysis
+  getAnalysis: (attemptId: number) =>
+    apiClient
+      .get<ApiResponse<AnalysisResponse>>(`/attempts/${attemptId}/analysis`)
       .then(r => r.data),
 };

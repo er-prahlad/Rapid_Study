@@ -5,7 +5,7 @@ import { memo, useEffect } from "react";
 import {
   LayoutDashboard, BookOpen, FileText, PenTool, Bookmark,
   Trophy, CalendarCheck, Bell, User, LogOut,
-  ChevronRight, GraduationCap, Shield,
+  ChevronRight, GraduationCap, Shield, TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -15,14 +15,15 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 
 const studentNav = [
-  { label: "Dashboard",     href: "/dashboard",    icon: LayoutDashboard },
-  { label: "Exams",         href: "/exams",         icon: GraduationCap },
-  { label: "Mock Tests",    href: "/tests",         icon: FileText },
-  { label: "Practice",      href: "/practice",      icon: PenTool },
-  { label: "Bookmarks",     href: "/bookmarks",     icon: Bookmark },
-  { label: "Leaderboard",   href: "/leaderboard",   icon: Trophy },
-  { label: "Study Plan",    href: "/study-plan",    icon: CalendarCheck },
-  { label: "Notifications", href: "/notifications", icon: Bell },
+  { label: "Dashboard",     href: "/dashboard",           icon: LayoutDashboard },
+  { label: "Exams",         href: "/exams",               icon: GraduationCap },
+  { label: "Mock Tests",    href: "/tests",               icon: FileText },
+  { label: "Practice",      href: "/practice",            icon: PenTool },
+  { label: "Performance",   href: "/analysis/performance",icon: TrendingUp },
+  { label: "Bookmarks",     href: "/bookmarks",           icon: Bookmark },
+  { label: "Leaderboard",   href: "/leaderboard",         icon: Trophy },
+  { label: "Study Plan",    href: "/study-plan",          icon: CalendarCheck },
+  { label: "Notifications", href: "/notifications",       icon: Bell },
 ];
 
 const adminNav = [

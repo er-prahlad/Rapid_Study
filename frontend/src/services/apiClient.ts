@@ -2,6 +2,10 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "ax
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
 
+const API_BASE_URL = BASE_URL.endsWith("/api/v1")
+  ? BASE_URL
+  : `${BASE_URL}/api/v1`;
+
 const TOKEN_KEY   = "rs_access_token";
 const REFRESH_KEY = "rs_refresh_token";
 
@@ -21,9 +25,9 @@ export const tokenStorage = {
 
 // ─── Axios instance ────────────────────────────────────────────────────────────
 const apiClient: AxiosInstance = axios.create({
-  baseURL: BASE_URL,
+  baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
-  timeout: 8000, // 8 seconds — fail fast rather than waiting 15s
+  timeout: 8000,
 });
 
 // ─── Request interceptor: attach Bearer token ─────────────────────────────────
@@ -75,7 +79,10 @@ apiClient.interceptors.response.use(
       }
 
       try {
-        const { data } = await axios.post(`${BASE_URL}/auth/refresh`, { refreshToken });
+        const { data } = await axios.post(
+  `${API_BASE_URL}/auth/refresh`,
+  { refreshToken }
+);
         const { accessToken, refreshToken: newRefresh } = data.data;
         tokenStorage.setTokens(accessToken, newRefresh);
         processQueue(null, accessToken);

@@ -1,7 +1,9 @@
 package com.rapidstudy.controller;
 
 import com.rapidstudy.dto.ApiResponse;
+import com.rapidstudy.dto.analysis.PerformanceResponse;
 import com.rapidstudy.dto.dashboard.DashboardResponse;
+import com.rapidstudy.service.AnalysisService;
 import com.rapidstudy.service.StudentService;
 import com.rapidstudy.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,16 +18,18 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Student-facing endpoints.
  *
- * GET /api/v1/student/dashboard — full dashboard data
+ * GET /api/v1/student/dashboard    — dashboard data  (Phase 15)
+ * GET /api/v1/student/performance  — performance stats (Phase 31)
  */
 @RestController
 @RequestMapping("/api/v1/student")
 @RequiredArgsConstructor
-@Tag(name = "Student", description = "Student dashboard and profile endpoints")
+@Tag(name = "Student", description = "Student dashboard and performance endpoints")
 @SecurityRequirement(name = "bearerAuth")
 public class StudentController {
 
-    private final StudentService studentService;
+    private final StudentService  studentService;
+    private final AnalysisService analysisService;
 
     @GetMapping("/dashboard")
     @Operation(summary = "Get student dashboard data")
@@ -33,5 +37,13 @@ public class StudentController {
         Long userId = SecurityUtil.currentUserId();
         DashboardResponse data = studentService.getDashboard(userId);
         return ResponseEntity.ok(ApiResponse.success("Dashboard loaded", data));
+    }
+
+    @GetMapping("/performance")
+    @Operation(summary = "Get overall performance statistics and history")
+    public ResponseEntity<ApiResponse<PerformanceResponse>> getPerformance() {
+        Long userId = SecurityUtil.currentUserId();
+        PerformanceResponse data = analysisService.getPerformance(userId);
+        return ResponseEntity.ok(ApiResponse.success("Performance retrieved", data));
     }
 }
