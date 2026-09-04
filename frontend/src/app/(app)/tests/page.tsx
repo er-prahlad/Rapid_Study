@@ -142,13 +142,20 @@ export default function TestsPage() {
         )}
       </div>
 
+      {/* Previous Year Papers link */}
+      <div className="flex items-center justify-between">
+        <Link href="/tests/previous-year"
+          className="inline-flex items-center gap-2 text-sm text-primary hover:underline font-medium">
+          <FileText className="h-4 w-4" />Previous Year Papers →
+        </Link>
+      </div>
+
       {/* Grid */}
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {[...Array(8)].map((_, i) => <TestCardSkeleton key={i} />)}
         </div>
-      ) : tests.length === 0 ? (
-        <div className="text-center py-20 space-y-4">
+      ) : tests.length === 0 ? (        <div className="text-center py-20 space-y-4">
           <BookOpen className="h-16 w-16 text-muted-foreground/30 mx-auto" />
           <p className="text-lg font-medium text-muted-foreground">
             {search ? `No tests matching "${search}"` : "No tests published yet"}

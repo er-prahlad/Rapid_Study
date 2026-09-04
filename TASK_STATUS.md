@@ -1,7 +1,7 @@
 # RapidStudy - Task Status
 
 ## Current Phase
-**PHASE 32: LEADERBOARD** - ✅ COMPLETED
+**PHASE 37: NOTIFICATIONS** - ✅ COMPLETED
 
 ---
 

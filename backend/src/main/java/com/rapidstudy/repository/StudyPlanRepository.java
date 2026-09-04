@@ -5,14 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
-/**
- * Repository for StudyPlan entity
- */
 @Repository
 public interface StudyPlanRepository extends JpaRepository<StudyPlan, Long> {
-    
-    List<StudyPlan> findByUserIdAndIsActiveTrue(Long userId);
-    
-    List<StudyPlan> findByUserId(Long userId);
+    List<StudyPlan> findByUserIdOrderByCreatedAtDesc(Long userId);
+    Optional<StudyPlan> findByIdAndUserId(Long id, Long userId);
 }
