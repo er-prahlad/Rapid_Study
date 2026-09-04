@@ -23,7 +23,7 @@ export const tokenStorage = {
 const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
-  timeout: 15000,
+  timeout: 8000, // 8 seconds — fail fast rather than waiting 15s
 });
 
 // ─── Request interceptor: attach Bearer token ─────────────────────────────────

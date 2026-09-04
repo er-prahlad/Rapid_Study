@@ -1,6 +1,7 @@
 package com.rapidstudy.service;
 
 import com.rapidstudy.dto.attempt.*;
+import com.rapidstudy.dto.question.OptionDto;
 import com.rapidstudy.dto.question.QuestionSafeDto;
 import com.rapidstudy.entity.*;
 import com.rapidstudy.enums.AttemptStatus;
@@ -13,8 +14,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -263,6 +267,250 @@ public class TestAttemptService {
                 .state(deriveState(hasAnswer, markForReview))
                 .selectedOptionId(saved.getSelectedOptionId())
                 .markedForReview(markForReview)
+                .build();
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    // Phase 28: Submit attempt + server-side scoring
+    // ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Submits the attempt and calculates the score entirely on the server.
+     *
+     * SECURITY RULES:
+     * - isCorrect determined by comparing selectedOptionId with the correct
+     *   option from the database — never from any client input.
+     * - marksObtained calculated using the question's marks/negativeMarks
+     *   from the database, not from client.
+     * - Duplicate submission prevented by checking status.
+     * - Expired attempts are auto-submitted with ABANDONED status.
+     * - Everything wrapped in a single @Transactional to prevent partial writes.
+     */
+    @Transactional
+    public SubmitResponse submitAttempt(Long attemptId, Long userId) {
+
+        TestAttempt attempt = findAttemptForUser(attemptId, userId);
+
+        // Prevent duplicate submission
+        if (attempt.getStatus() != AttemptStatus.IN_PROGRESS)
+            throw new BadRequestException(
+                "Attempt already " + attempt.getStatus().name().toLowerCase());
+
+        boolean wasExpired = isExpired(attempt);
+        LocalDateTime submittedAt = LocalDateTime.now();
+
+        // Load all answers
+        List<AttemptAnswer> answers = answerRepository.findByAttemptId(attemptId);
+        Map<Long, AttemptAnswer> answerByQuestionId = answers.stream()
+                .collect(Collectors.toMap(AttemptAnswer::getQuestionId, a -> a));
+
+        // Load all questions in this test
+        List<MockTestQuestion> mtqs = mtqRepository
+                .findByMockTestIdOrderByQuestionOrderAsc(attempt.getMockTestId());
+
+        int correct = 0, wrong = 0, unanswered = 0;
+        BigDecimal totalScore = BigDecimal.ZERO;
+
+        for (MockTestQuestion mtq : mtqs) {
+            Long qId = mtq.getQuestionId();
+            Question q = questionRepository.findById(qId).orElse(null);
+            if (q == null) continue;
+
+            AttemptAnswer ans = answerByQuestionId.get(qId);
+
+            if (ans == null || ans.getSelectedOptionId() == null) {
+                // Not answered — no marks, no penalty
+                unanswered++;
+                if (ans == null) {
+                    // Create a record for completeness
+                    AttemptAnswer empty = new AttemptAnswer();
+                    empty.setAttemptId(attemptId);
+                    empty.setQuestionId(qId);
+                    empty.setIsCorrect(false);
+                    empty.setMarksObtained(BigDecimal.ZERO);
+                    empty.setMarkedForReview(false);
+                    answerRepository.save(empty);
+                } else {
+                    ans.setIsCorrect(false);
+                    ans.setMarksObtained(BigDecimal.ZERO);
+                    answerRepository.save(ans);
+                }
+                continue;
+            }
+
+            // Determine correctness by checking the option's isCorrect flag
+            // This is ONLY from the database — never from client input
+            Option selectedOpt = optionRepository.findById(ans.getSelectedOptionId()).orElse(null);
+            boolean isCorrect = selectedOpt != null && Boolean.TRUE.equals(selectedOpt.getIsCorrect());
+
+            BigDecimal marksObtained;
+            if (isCorrect) {
+                correct++;
+                marksObtained = q.getMarks();
+                totalScore = totalScore.add(marksObtained);
+            } else {
+                wrong++;
+                marksObtained = q.getNegativeMarks().negate();
+                totalScore = totalScore.add(marksObtained);
+            }
+
+            ans.setIsCorrect(isCorrect);
+            ans.setMarksObtained(marksObtained);
+            answerRepository.save(ans);
+        }
+
+        // Ensure score doesn't go negative
+        if (totalScore.compareTo(BigDecimal.ZERO) < 0) totalScore = BigDecimal.ZERO;
+
+        // Calculate percentage and accuracy
+        BigDecimal totalMarks = attempt.getTotalMarks();
+        double percentage = totalMarks != null && totalMarks.compareTo(BigDecimal.ZERO) > 0
+                ? totalScore.divide(totalMarks, 4, RoundingMode.HALF_UP)
+                             .multiply(BigDecimal.valueOf(100))
+                             .doubleValue()
+                : 0;
+
+        int totalAttempted = correct + wrong;
+        double accuracy = totalAttempted > 0
+                ? (double) correct / totalAttempted * 100
+                : 0;
+
+        int timeTakenSeconds = (int) ChronoUnit.SECONDS.between(
+                attempt.getStartedAt(), submittedAt);
+
+        // Finalise the attempt record
+        attempt.setScore(totalScore);
+        attempt.setCorrectAnswers(correct);
+        attempt.setWrongAnswers(wrong);
+        attempt.setUnanswered(unanswered);
+        attempt.setTimeTakenSeconds(timeTakenSeconds);
+        attempt.setSubmittedAt(submittedAt);
+        attempt.setStatus(wasExpired ? AttemptStatus.ABANDONED : AttemptStatus.COMPLETED);
+        attemptRepository.save(attempt);
+
+        log.info("Attempt submitted: id={} userId={} score={}/{} correct={} wrong={} expired={}",
+                attemptId, userId, totalScore, totalMarks, correct, wrong, wasExpired);
+
+        return SubmitResponse.builder()
+                .attemptId(attemptId)
+                .score(totalScore)
+                .totalMarks(totalMarks)
+                .percentage(Math.round(percentage * 100.0) / 100.0)
+                .accuracy(Math.round(accuracy * 100.0) / 100.0)
+                .correctAnswers(correct)
+                .wrongAnswers(wrong)
+                .unanswered(unanswered)
+                .timeTakenSeconds(timeTakenSeconds)
+                .submittedAt(submittedAt)
+                .wasExpired(wasExpired)
+                .build();
+    }
+
+    // ──────────────────────────────────────────────────────────────────
+    // Phase 29: Get full result with per-question breakdown
+    // ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Returns the full result including correct answers and explanations.
+     * Only available AFTER submission — never during an active attempt.
+     */
+    @Transactional(readOnly = true)
+    public ResultResponse getResult(Long attemptId, Long userId) {
+
+        TestAttempt attempt = findAttemptForUser(attemptId, userId);
+
+        if (attempt.getStatus() == AttemptStatus.IN_PROGRESS)
+            throw new BadRequestException(
+                "Test is still in progress. Submit first to see results.");
+
+        MockTest test = mockTestRepository.findById(attempt.getMockTestId()).orElseThrow();
+
+        // Load all answers
+        Map<Long, AttemptAnswer> answerMap = answerRepository.findByAttemptId(attemptId)
+                .stream().collect(Collectors.toMap(AttemptAnswer::getQuestionId, a -> a));
+
+        // Build per-question result list
+        List<MockTestQuestion> mtqs = mtqRepository
+                .findByMockTestIdOrderByQuestionOrderAsc(attempt.getMockTestId());
+
+        List<QuestionResultDto> questionResults = new ArrayList<>();
+
+        for (MockTestQuestion mtq : mtqs) {
+            Question q = questionRepository.findById(mtq.getQuestionId()).orElse(null);
+            if (q == null) continue;
+
+            AttemptAnswer ans = answerMap.get(q.getId());
+
+            // Load all options WITH isCorrect flag (safe to reveal after submission)
+            List<Option> opts = optionRepository.findByQuestionIdOrderByOptionOrderAsc(q.getId());
+            List<OptionDto> optDtos = opts.stream().map(o -> OptionDto.builder()
+                    .id(o.getId())
+                    .optionText(o.getOptionText())
+                    .optionTextHindi(o.getOptionTextHindi())
+                    .optionOrder(o.getOptionOrder())
+                    .isCorrect(o.getIsCorrect()) // safe to reveal now
+                    .build()).collect(Collectors.toList());
+
+            // Find the correct option id
+            Long correctOptId = opts.stream()
+                    .filter(o -> Boolean.TRUE.equals(o.getIsCorrect()))
+                    .map(Option::getId)
+                    .findFirst().orElse(null);
+
+            Long    selectedOptId   = ans != null ? ans.getSelectedOptionId() : null;
+            boolean isCorrect       = ans != null && Boolean.TRUE.equals(ans.getIsCorrect());
+            boolean wasSkipped      = selectedOptId == null;
+            BigDecimal marksObtained = ans != null && ans.getMarksObtained() != null
+                    ? ans.getMarksObtained() : BigDecimal.ZERO;
+
+            questionResults.add(QuestionResultDto.builder()
+                    .questionId(q.getId())
+                    .questionOrder(mtq.getQuestionOrder())
+                    .questionText(q.getQuestionText())
+                    .questionTextHindi(q.getQuestionTextHindi())
+                    .difficulty(q.getDifficulty())
+                    .marks(q.getMarks())
+                    .negativeMarks(q.getNegativeMarks())
+                    .marksObtained(marksObtained)
+                    .selectedOptionId(selectedOptId)
+                    .correctOptionId(correctOptId)
+                    .isCorrect(isCorrect)
+                    .wasSkipped(wasSkipped)
+                    .explanation(q.getExplanation())
+                    .explanationHindi(q.getExplanationHindi())
+                    .options(optDtos)
+                    .build());
+        }
+
+        BigDecimal totalMarks = attempt.getTotalMarks();
+        double percentage = totalMarks != null && totalMarks.compareTo(BigDecimal.ZERO) > 0
+                ? (attempt.getScore() != null
+                    ? attempt.getScore().divide(totalMarks, 4, RoundingMode.HALF_UP)
+                              .multiply(BigDecimal.valueOf(100)).doubleValue()
+                    : 0)
+                : 0;
+
+        int totalAttempted = attempt.getCorrectAnswers() + attempt.getWrongAnswers();
+        double accuracy = totalAttempted > 0
+                ? (double) attempt.getCorrectAnswers() / totalAttempted * 100
+                : 0;
+
+        return ResultResponse.builder()
+                .attemptId(attemptId)
+                .mockTestId(attempt.getMockTestId())
+                .testTitle(test.getTitle())
+                .score(attempt.getScore())
+                .totalMarks(totalMarks)
+                .percentage(Math.round(percentage * 100.0) / 100.0)
+                .accuracy(Math.round(accuracy * 100.0) / 100.0)
+                .correctAnswers(attempt.getCorrectAnswers())
+                .wrongAnswers(attempt.getWrongAnswers())
+                .unanswered(attempt.getUnanswered())
+                .timeTakenSeconds(attempt.getTimeTakenSeconds() != null
+                        ? attempt.getTimeTakenSeconds() : 0)
+                .startedAt(attempt.getStartedAt())
+                .submittedAt(attempt.getSubmittedAt())
+                .questions(questionResults)
                 .build();
     }
 

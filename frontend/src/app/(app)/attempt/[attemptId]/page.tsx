@@ -2,8 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { attemptApi, QuestionState, QuestionStateDto } from "@/services/attemptApi";
-import type { QuestionSafeDto, OptionDto } from "@/services/mockTestApi";
+import { attemptApi, QuestionState, QuestionStateDto } from "@/services/attemptApi";import type { QuestionSafeDto, OptionDto } from "@/services/mockTestApi";
 import { useServerTimer } from "@/hooks/use-server-timer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -193,9 +192,24 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
     if (currentIndex < questions.length - 1) setCurrentIndex(i => i + 1);
   };
 
-  const handleSubmit = useCallback(() => {
-    router.push(`/result/${attemptId}`);
-  }, [attemptId, router]);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = useCallback(async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await attemptApi.submit(attemptId);
+      router.push(`/result/${attemptId}`);
+    } catch (e: any) {
+      // If already submitted (e.g. duplicate click), still redirect to result
+      if (e?.response?.status === 400) {
+        router.push(`/result/${attemptId}`);
+      } else {
+        toast({ title: "Submit failed", description: e?.response?.data?.message ?? "Please try again", variant: "destructive" });
+        setSubmitting(false);
+      }
+    }
+  }, [attemptId, router, submitting]);
 
   // ── Loading ───────────────────────────────────────────────────────
 
@@ -241,7 +255,7 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
           {formatted}
         </div>
 
-        <Button size="sm" onClick={handleSubmit} className="gap-1.5 shrink-0">
+        <Button size="sm" onClick={handleSubmit} className="gap-1.5 shrink-0" loading={submitting}>
           <Send className="h-4 w-4" />
           Submit
         </Button>
@@ -421,7 +435,7 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
             </div>
           )}
 
-          <Button className="mt-4" onClick={handleSubmit}>
+          <Button className="mt-4" onClick={handleSubmit} loading={submitting}>
             <Send className="h-4 w-4 mr-2" />Submit Test
           </Button>
         </aside>

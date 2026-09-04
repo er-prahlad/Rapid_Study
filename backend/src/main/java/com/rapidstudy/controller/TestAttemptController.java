@@ -125,4 +125,34 @@ public class TestAttemptController {
         QuestionStateDto state = attemptService.toggleReview(id, questionId, false, userId);
         return ResponseEntity.ok(ApiResponse.success("Review mark removed", state));
     }
+
+    // ── Submit attempt + server-side scoring (Phase 28) ──────────────
+
+    @PostMapping("/api/v1/attempts/{id}/submit")
+    @Operation(
+        summary = "Submit a test attempt",
+        description = "Server calculates all scores. Prevents duplicate submission. " +
+                      "Auto-marks expired attempts as ABANDONED.")
+    public ResponseEntity<ApiResponse<SubmitResponse>> submitAttempt(
+            @PathVariable Long id) {
+
+        Long userId = SecurityUtil.currentUserId();
+        SubmitResponse response = attemptService.submitAttempt(id, userId);
+        return ResponseEntity.ok(ApiResponse.success("Attempt submitted", response));
+    }
+
+    // ── Full result with per-question breakdown (Phase 29) ────────────
+
+    @GetMapping("/api/v1/attempts/{id}/result")
+    @Operation(
+        summary = "Get full result after submission",
+        description = "Returns correct answers and explanations. " +
+                      "Only available after the attempt is submitted.")
+    public ResponseEntity<ApiResponse<ResultResponse>> getResult(
+            @PathVariable Long id) {
+
+        Long userId = SecurityUtil.currentUserId();
+        ResultResponse response = attemptService.getResult(id, userId);
+        return ResponseEntity.ok(ApiResponse.success("Result retrieved", response));
+    }
 }

@@ -48,6 +48,63 @@ export interface SaveAnswerResponse {
   state:            QuestionState;
 }
 
+// Phase 28
+export interface SubmitResponse {
+  attemptId:        number;
+  score:            number;
+  totalMarks:       number;
+  percentage:       number;
+  accuracy:         number;
+  correctAnswers:   number;
+  wrongAnswers:     number;
+  unanswered:       number;
+  timeTakenSeconds: number;
+  submittedAt:      string;
+  wasExpired:       boolean;
+}
+
+// Phase 29
+export interface QuestionResultDto {
+  questionId:        number;
+  questionOrder:     number;
+  questionText:      string;
+  questionTextHindi?: string;
+  difficulty:        string;
+  marks:             number;
+  negativeMarks:     number;
+  marksObtained:     number;
+  selectedOptionId:  number | null;
+  correctOptionId:   number | null;
+  isCorrect:         boolean;
+  wasSkipped:        boolean;
+  explanation?:      string;
+  explanationHindi?: string;
+  options: {
+    id: number;
+    optionText: string;
+    optionTextHindi?: string;
+    optionOrder: number;
+    isCorrect: boolean;
+  }[];
+}
+
+export interface ResultResponse {
+  attemptId:        number;
+  mockTestId:       number;
+  testTitle:        string;
+  score:            number;
+  totalMarks:       number;
+  percentage:       number;
+  accuracy:         number;
+  correctAnswers:   number;
+  wrongAnswers:     number;
+  unanswered:       number;
+  timeTakenSeconds: number;
+  startedAt:        string;
+  submittedAt:      string;
+  questions:        QuestionResultDto[];
+}
+
 // ── API calls ─────────────────────────────────────────────────────────────────
 
 export const attemptApi = {
@@ -84,4 +141,16 @@ export const attemptApi = {
       .delete<ApiResponse<QuestionStateDto>>(
         `/attempts/${attemptId}/questions/${questionId}/review`
       ).then(r => r.data),
+
+  // Phase 28: Submit
+  submit: (attemptId: number) =>
+    apiClient
+      .post<ApiResponse<SubmitResponse>>(`/attempts/${attemptId}/submit`)
+      .then(r => r.data),
+
+  // Phase 29: Result
+  getResult: (attemptId: number) =>
+    apiClient
+      .get<ApiResponse<ResultResponse>>(`/attempts/${attemptId}/result`)
+      .then(r => r.data),
 };
