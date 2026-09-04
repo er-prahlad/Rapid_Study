@@ -1,12 +1,19 @@
-import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
+import axios, {
+  AxiosError,
+  AxiosInstance,
+  InternalAxiosRequestConfig,
+} from "axios";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 const API_BASE_URL = BASE_URL.endsWith("/api/v1")
   ? BASE_URL
   : `${BASE_URL}/api/v1`;
 
-const TOKEN_KEY   = "rs_access_token";
+console.log("API_BASE_URL:", API_BASE_URL);
+
+const TOKEN_KEY = "rs_access_token";
 const REFRESH_KEY = "rs_refresh_token";
 
 // ─── Token storage (localStorage) ─────────────────────────────────────────────
