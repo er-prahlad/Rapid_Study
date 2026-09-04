@@ -246,6 +246,8 @@ public class MockTestService {
         t.setTotalMarks(req.getTotalMarks());
         t.setNegativeMarks(req.getNegativeMarks() != null
                 ? req.getNegativeMarks() : java.math.BigDecimal.ZERO);
+        if (req.getPaperType() != null) t.setPaperType(req.getPaperType());
+        t.setPaperYear(req.getPaperYear());
     }
 
     public MockTestDto toDto(MockTest t) {
@@ -261,6 +263,8 @@ public class MockTestService {
                 .totalQuestions(t.getTotalQuestions())
                 .totalMarks(t.getTotalMarks()).negativeMarks(t.getNegativeMarks())
                 .isPublished(t.getIsPublished())
+                .paperType(t.getPaperType())
+                .paperYear(t.getPaperYear())
                 .createdAt(t.getCreatedAt()).updatedAt(t.getUpdatedAt())
                 .build();
     }

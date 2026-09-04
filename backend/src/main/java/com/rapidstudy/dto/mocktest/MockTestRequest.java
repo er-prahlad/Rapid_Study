@@ -30,4 +30,8 @@ public class MockTestRequest {
 
     @NotNull @DecimalMin("0.0")
     private BigDecimal negativeMarks = BigDecimal.ZERO;
+
+    /** MOCK_TEST or PREVIOUS_YEAR */
+    private String  paperType = "MOCK_TEST";
+    private Integer paperYear;
 }

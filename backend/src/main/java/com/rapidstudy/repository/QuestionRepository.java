@@ -2,8 +2,7 @@ package com.rapidstudy.repository;
 
 import com.rapidstudy.entity.Question;
 import com.rapidstudy.enums.Difficulty;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -56,4 +55,16 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
             @Param("topicId")    Long topicId,
             @Param("difficulty") Difficulty difficulty,
             Pageable pageable);
+
+    /** Questions the student has previously got wrong (for weak-area practice) */
+    @Query("""
+        SELECT DISTINCT q FROM Question q
+        JOIN AttemptAnswer aa ON aa.questionId = q.id
+        JOIN TestAttempt a ON a.id = aa.attemptId
+        WHERE a.userId = :userId
+          AND aa.isCorrect = false
+          AND q.isActive = true
+        ORDER BY q.id DESC
+        """)
+    Page<Question> findWrongQuestionsByUser(@Param("userId") Long userId, Pageable pageable);
 }

@@ -4,6 +4,7 @@ import "./globals.css";
 import { QueryProvider } from "@/context/QueryProvider";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
+import ScrollToTop from "./ScrollToTop";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,13 +20,24 @@ export const metadata: Metadata = {
     "India's best competitive exam preparation platform for SSC, UPSC, BPSC, Railway, Banking.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" suppressHydrationWarning className={inter.variable}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={inter.variable}
+    >
       <body className={inter.className}>
         <QueryProvider>
           <AuthProvider>
+            <ScrollToTop />
+
             {children}
+
             <Toaster />
           </AuthProvider>
         </QueryProvider>

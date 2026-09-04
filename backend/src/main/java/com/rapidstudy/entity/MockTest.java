@@ -51,6 +51,14 @@ public class MockTest {
     @Column(name = "is_published", nullable = false)
     private Boolean isPublished = false;
 
+    /** MOCK_TEST or PREVIOUS_YEAR — reuses the same test engine (Phase 35) */
+    @Column(name = "paper_type", nullable = false, length = 20)
+    private String paperType = "MOCK_TEST";
+
+    /** Year of paper, e.g. 2023 — only for PREVIOUS_YEAR type */
+    @Column(name = "paper_year")
+    private Integer paperYear;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

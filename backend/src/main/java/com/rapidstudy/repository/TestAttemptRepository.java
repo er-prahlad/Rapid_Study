@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,4 +44,18 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> 
         GROUP BY u.id, u.name ORDER BY 3 DESC
         """)
     List<Object[]> findTopUsersByScore(Pageable pageable);
+
+    @Query("""
+        SELECT u.id, u.name,
+            AVG(CASE WHEN a.totalMarks > 0 THEN a.score / a.totalMarks * 100 ELSE 0 END),
+            AVG(CASE WHEN (a.correctAnswers + a.wrongAnswers + a.unanswered) > 0
+                     THEN a.correctAnswers * 100.0 / (a.correctAnswers + a.wrongAnswers + a.unanswered)
+                     ELSE 0 END),
+            COUNT(a.id)
+        FROM TestAttempt a JOIN a.user u
+        WHERE a.status = com.rapidstudy.enums.AttemptStatus.COMPLETED
+          AND a.submittedAt >= :since
+        GROUP BY u.id, u.name ORDER BY 3 DESC
+        """)
+    List<Object[]> findTopUsersByScoreSince(@Param("since") LocalDateTime since, Pageable pageable);
 }

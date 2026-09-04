@@ -1,7 +1,7 @@
 # RapidStudy - Task Status
 
 ## Current Phase
-**PHASE 31: PERFORMANCE SYSTEM** - ✅ COMPLETED
+**PHASE 32: LEADERBOARD** - ✅ COMPLETED
 
 ---
 

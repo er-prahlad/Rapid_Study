@@ -20,6 +20,8 @@ public class MockTestDto {
     private BigDecimal    totalMarks;
     private BigDecimal    negativeMarks;
     private Boolean       isPublished;
+    private String        paperType;    // MOCK_TEST | PREVIOUS_YEAR
+    private Integer       paperYear;   // e.g. 2023, null for mock tests
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

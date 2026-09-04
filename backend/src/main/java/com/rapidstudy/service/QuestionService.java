@@ -63,6 +63,13 @@ public class QuestionService {
                 .map(this::toSafeDto);
     }
 
+    /** Phase 34: Questions the student previously got wrong */
+    @Transactional(readOnly = true)
+    public Page<QuestionSafeDto> getPreviousMistakes(Long userId, Pageable pageable) {
+        return questionRepository.findWrongQuestionsByUser(userId, pageable)
+                .map(this::toSafeDto);
+    }
+
     /** Admin: single question with answers */
     @Transactional(readOnly = true)
     public QuestionDto getById(Long id) {

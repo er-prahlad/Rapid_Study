@@ -39,4 +39,10 @@ public interface MockTestRepository extends JpaRepository<MockTest, Long> {
             @Param("examId") Long examId,
             @Param("search") String search,
             Pageable pageable);
+
+    /** Previous year papers */
+    Page<MockTest> findByIsPublishedTrueAndPaperTypeAndExamId(
+            String paperType, Long examId, Pageable pageable);
+
+    Page<MockTest> findByIsPublishedTrueAndPaperType(String paperType, Pageable pageable);
 }
