@@ -168,4 +168,13 @@ public class AuthService {
                 .language(user.getLanguage())
                 .build();
     }
+
+    /** Phase 42: update language preference */
+    @Transactional
+    public void updateLanguage(Long userId, com.rapidstudy.enums.Language language) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new com.rapidstudy.exception.ResourceNotFoundException("User not found"));
+        user.setLanguage(language);
+        userRepository.save(user);
+    }
 }

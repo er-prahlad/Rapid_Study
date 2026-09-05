@@ -104,4 +104,21 @@ public class AuthController {
         UserProfileResponse profile = authService.getProfile(userId);
         return ResponseEntity.ok(ApiResponse.success("Profile retrieved", profile));
     }
+
+    // Phase 42: Language toggle
+    @PutMapping("/language")
+    @Operation(summary = "Update user language preference (EN/HI/HIEN)",
+        security = @SecurityRequirement(name = "bearerAuth"))
+    public ResponseEntity<ApiResponse<Void>> updateLanguage(
+            @RequestBody java.util.Map<String, String> body) {
+        String lang = body.get("language");
+        if (lang == null) throw new com.rapidstudy.exception.BadRequestException("language is required");
+        com.rapidstudy.enums.Language language;
+        try { language = com.rapidstudy.enums.Language.valueOf(lang.toUpperCase()); }
+        catch (IllegalArgumentException e) {
+            throw new com.rapidstudy.exception.BadRequestException("Invalid language. Use EN, HI, or HIEN");
+        }
+        authService.updateLanguage(SecurityUtil.currentUserId(), language);
+        return ResponseEntity.ok(ApiResponse.success("Language updated", null));
+    }
 }

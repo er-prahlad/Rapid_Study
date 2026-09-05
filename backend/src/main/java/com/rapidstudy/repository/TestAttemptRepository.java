@@ -12,7 +12,6 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
 @Repository
 public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> {
 
@@ -44,7 +43,6 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> 
         GROUP BY u.id, u.name ORDER BY 3 DESC
         """)
     List<Object[]> findTopUsersByScore(Pageable pageable);
-
     @Query("""
         SELECT u.id, u.name,
             AVG(CASE WHEN a.totalMarks > 0 THEN a.score / a.totalMarks * 100 ELSE 0 END),
@@ -58,4 +56,24 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> 
         GROUP BY u.id, u.name ORDER BY 3 DESC
         """)
     List<Object[]> findTopUsersByScoreSince(@Param("since") LocalDateTime since, Pageable pageable);
+
+    // Admin dashboard queries
+    long countBySubmittedAtAfter(LocalDateTime since);
+
+    long countBySubmittedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    @Query("""
+        SELECT t.examId, e.name, COUNT(a.id) as cnt
+        FROM TestAttempt a JOIN a.mockTest t JOIN t.exam e
+        WHERE a.status = com.rapidstudy.enums.AttemptStatus.COMPLETED
+        GROUP BY t.examId, e.name ORDER BY cnt DESC
+        """)
+    List<Object[]> findPopularExams(Pageable pageable);
+
+    @Query("""
+        SELECT AVG(CASE WHEN a.totalMarks > 0 THEN a.score / a.totalMarks * 100 ELSE 0 END)
+        FROM TestAttempt a
+        WHERE a.status = com.rapidstudy.enums.AttemptStatus.COMPLETED
+        """)
+    Optional<Double> findAveragePlatformScore();
 }
