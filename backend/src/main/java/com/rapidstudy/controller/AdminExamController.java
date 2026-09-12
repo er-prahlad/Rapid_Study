@@ -3,6 +3,7 @@ package com.rapidstudy.controller;
 import com.rapidstudy.dto.ApiResponse;
 import com.rapidstudy.dto.exam.*;
 import com.rapidstudy.service.ExamService;
+import com.rapidstudy.service.QuestionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,7 +42,8 @@ import org.springframework.web.bind.annotation.*;
 @SecurityRequirement(name = "bearerAuth")
 public class AdminExamController {
 
-    private final ExamService examService;
+    private final ExamService     examService;
+    private final QuestionService questionService;
 
     // ── Exams ──────────────────────────────────────────────────────────
 
