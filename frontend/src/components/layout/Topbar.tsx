@@ -55,7 +55,6 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
           <Search className="h-5 w-5" />
         </Link>
       </Button>
-
       {/* Notifications */}
       <Button variant="ghost" size="icon" asChild className="relative">
         <Link href="/notifications">

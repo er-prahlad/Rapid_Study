@@ -70,6 +70,8 @@ public class RedisConfig {
         configs.put("leaderboard_weekly",  defaultConfig.entryTtl(Duration.ofMinutes(15)));
         configs.put("leaderboard_monthly", defaultConfig.entryTtl(Duration.ofMinutes(30)));
         configs.put("leaderboard_alltime", defaultConfig.entryTtl(Duration.ofMinutes(60)));
+        configs.put("popular_exams",       defaultConfig.entryTtl(Duration.ofMinutes(30)));
+        configs.put("test_metadata",       defaultConfig.entryTtl(Duration.ofMinutes(15)));
 
         return RedisCacheManager.builder(factory)
                 .cacheDefaults(defaultConfig)

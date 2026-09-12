@@ -13,6 +13,8 @@ import com.rapidstudy.repository.SubjectRepository;
 import com.rapidstudy.repository.TopicRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +47,7 @@ public class ExamService {
 
     /** Paginated list of active exams with optional keyword search */
     @Transactional(readOnly = true)
+    @Cacheable(value = "popular_exams", key = "#query + '_' + #pageable.pageNumber", condition = "#query == null")
     public Page<ExamDto> getActiveExams(String query, Pageable pageable) {
         Page<Exam> page = (query == null || query.isBlank())
                 ? examRepository.findByIsActiveTrueOrderByNameAsc(pageable)
@@ -134,6 +137,7 @@ public class ExamService {
     }
 
     @Transactional
+    @CacheEvict(value = "popular_exams", allEntries = true)
     public ExamDto createExam(ExamRequest req) {
         if (examRepository.existsByCode(req.getCode())) {
             throw new ConflictException("Exam code already exists: " + req.getCode());
@@ -146,6 +150,7 @@ public class ExamService {
     }
 
     @Transactional
+    @CacheEvict(value = "popular_exams", allEntries = true)
     public ExamDto updateExam(Long id, ExamRequest req) {
         Exam exam = examRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Exam not found: " + id));

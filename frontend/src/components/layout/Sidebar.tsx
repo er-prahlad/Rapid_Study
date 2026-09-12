@@ -19,6 +19,7 @@ import {
   GraduationCap,
   Shield,
   TrendingUp,
+  Brain,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -85,6 +86,11 @@ const studentNav = [
     label: "Study Plan",
     href: "/study-plan",
     icon: CalendarCheck,
+  },
+  {
+    label: "AI Assistant",
+    href: "/ai",
+    icon: Brain,
   },
   {
     label: "Notifications",

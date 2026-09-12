@@ -31,6 +31,10 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       timeout: 60000ms
+      # Rate limiting defaults — override per endpoint in RateLimitConfig
+      rate-limit:
+        default-requests-per-minute: 100
+        auth-requests-per-minute: 20
 
   flyway:
     enabled: true

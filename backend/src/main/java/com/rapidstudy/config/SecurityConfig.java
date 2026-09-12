@@ -80,7 +80,8 @@ public class SecurityConfig {
                         "/api/v1/exams",
                         "/api/v1/exams/**",
                         "/api/v1/tests",
-                        "/api/v1/tests/**"
+                        "/api/v1/tests/**",
+                        "/api/v1/search"
                 ).permitAll()
 
                 // ── ADMIN ONLY ───────────────────────────────────────────
