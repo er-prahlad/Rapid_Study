@@ -115,6 +115,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex, HttpServletRequest request) {
         
+        // Never expose stack traces
         ErrorResponse error = ErrorResponse.builder()
                 .success(false)
                 .message("Internal server error")
@@ -124,4 +125,18 @@ public class GlobalExceptionHandler {
         
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
+
+    // Phase 54: 422 Unprocessable Entity
+    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingParam(
+            org.springframework.web.bind.MissingServletRequestParameterException ex,
+            HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(
+                ErrorResponse.builder().success(false)
+                        .message("Missing required parameter: " + ex.getParameterName())
+                        .timestamp(LocalDateTime.now()).path(request.getRequestURI()).build());
+    }
+
+    // Phase 54 / Phase 56: 429 Too Many Requests (triggered by BadRequestException with rate limit message)
+    // Real 429 via RateLimitService — BadRequestException re-used with the rate limit message
 }

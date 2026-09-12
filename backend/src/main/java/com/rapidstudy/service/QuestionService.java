@@ -70,6 +70,27 @@ public class QuestionService {
                 .map(this::toSafeDto);
     }
 
+    /** Phase 47: Set question status (DRAFT → APPROVED → PUBLISHED) */
+    @Transactional
+    public void setQuestionStatus(Long id, String status) {
+        Question q = findOrThrow(id);
+        if (!List.of("DRAFT", "APPROVED", "PUBLISHED").contains(status))
+            throw new com.rapidstudy.exception.BadRequestException("Invalid status: " + status);
+        q.setStatus(status);
+        // Only make visible to students when PUBLISHED
+        q.setIsActive("PUBLISHED".equals(status));
+        questionRepository.save(q);
+        log.info("Question {} status set to {}", id, status);
+    }
+
+    /** Phase 47: Get questions by status (for admin review) */
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<QuestionDto> getQuestionsByStatus(
+            String status, org.springframework.data.domain.Pageable pageable) {
+        return questionRepository.findByStatusAndAiGeneratedTrue(status, pageable)
+                .map(q -> toDto(q, true));
+    }
+
     /** Admin: single question with answers */
     @Transactional(readOnly = true)
     public QuestionDto getById(Long id) {

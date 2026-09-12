@@ -67,4 +67,7 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
         ORDER BY q.id DESC
         """)
     Page<Question> findWrongQuestionsByUser(@Param("userId") Long userId, Pageable pageable);
+
+    /** Phase 47: AI question review */
+    Page<Question> findByStatusAndAiGeneratedTrue(String status, Pageable pageable);
 }

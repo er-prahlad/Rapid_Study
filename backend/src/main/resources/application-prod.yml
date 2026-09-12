@@ -1,20 +1,36 @@
 spring:
+  # Production datasource — override SSL for managed DBs (Render, PlanetScale etc.)
+  datasource:
+    url: jdbc:mysql://${DB_HOST}:${DB_PORT:3306}/${DB_NAME}?useSSL=${DB_SSL:true}&requireSSL=${DB_SSL:true}&serverTimezone=UTC&allowPublicKeyRetrieval=true
+
   jpa:
     show-sql: false
     hibernate:
       ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+
+  # Production Redis — TLS
+  data:
+    redis:
+      ssl:
+        enabled: ${REDIS_SSL:false}
 
 logging:
   level:
     root: WARN
     com.rapidstudy: INFO
     org.springframework.security: WARN
+    org.hibernate.SQL: WARN
 
-# Production-specific settings
+# Never expose stack traces in production
 server:
+  port: ${PORT:8080}
   error:
     include-stacktrace: NEVER
     include-message: NEVER
+    include-binding-errors: NEVER
 
 management:
   endpoints:

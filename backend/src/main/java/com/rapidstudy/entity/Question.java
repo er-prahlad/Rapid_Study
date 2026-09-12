@@ -63,6 +63,17 @@ public class Question {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
+    /**
+     * Phase 47: AI question generation workflow
+     * DRAFT → admin reviews → APPROVED → PUBLISHED
+     * Manually created questions default to PUBLISHED.
+     */
+    @Column(nullable = false, length = 20)
+    private String status = "PUBLISHED";
+
+    @Column(name = "ai_generated", nullable = false)
+    private Boolean aiGenerated = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -133,4 +133,31 @@ public class AdminExamController {
         examService.deleteTopic(id);
         return ResponseEntity.ok(ApiResponse.success("Topic deleted", null));
     }
+
+    // ── Phase 47: AI Question approval workflow ───────────────────────────
+
+    @PatchMapping("/questions/{id}/approve")
+    @Operation(summary = "Approve a DRAFT AI-generated question (moves to APPROVED)")
+    public ResponseEntity<ApiResponse<Void>> approveQuestion(@PathVariable Long id) {
+        questionService.setQuestionStatus(id, "APPROVED");
+        return ResponseEntity.ok(ApiResponse.success("Question approved", null));
+    }
+
+    @PatchMapping("/questions/{id}/publish")
+    @Operation(summary = "Publish an APPROVED question (moves to PUBLISHED, makes visible)")
+    public ResponseEntity<ApiResponse<Void>> publishQuestion(@PathVariable Long id) {
+        questionService.setQuestionStatus(id, "PUBLISHED");
+        return ResponseEntity.ok(ApiResponse.success("Question published", null));
+    }
+
+    @GetMapping("/questions/drafts")
+    @Operation(summary = "List all DRAFT AI-generated questions awaiting review")
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<
+            com.rapidstudy.dto.question.QuestionDto>>> getDrafts(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "20") int size) {
+        var result = questionService.getQuestionsByStatus("DRAFT",
+                org.springframework.data.domain.PageRequest.of(page, size));
+        return ResponseEntity.ok(ApiResponse.success("Draft questions", result));
+    }
 }

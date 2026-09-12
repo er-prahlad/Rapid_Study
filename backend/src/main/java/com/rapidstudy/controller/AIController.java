@@ -1,8 +1,11 @@
 package com.rapidstudy.controller;
 
 import com.rapidstudy.ai.AIService;
+import com.rapidstudy.ai.AIServiceImpl;
 import com.rapidstudy.dto.ApiResponse;
+import com.rapidstudy.exception.BadRequestException;
 import com.rapidstudy.service.AnalysisService;
+import com.rapidstudy.service.RateLimitService;
 import com.rapidstudy.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -31,22 +34,33 @@ import java.util.Map;
 @SecurityRequirement(name = "bearerAuth")
 public class AIController {
 
-    private final AIService      aiService;
+    private final AIService       aiService;
+    private final AIServiceImpl   aiServiceImpl;
     private final AnalysisService analysisService;
+    private final RateLimitService rateLimitService;
 
     @PostMapping("/explain")
     @Operation(summary = "Explain a question (AI or rule-based fallback)")
     public ResponseEntity<ApiResponse<Map<String, Object>>> explain(
             @RequestBody Map<String, Object> body) {
 
+        Long userId = SecurityUtil.currentUserId();
+
+        // Phase 46: Rate limit — 10 AI calls per minute per user
+        if (!rateLimitService.isAiAllowed(userId)) {
+            throw new BadRequestException("Too many AI requests. Please wait a moment.");
+        }
+
         Long   qId  = body.containsKey("questionId") ? Long.valueOf(body.get("questionId").toString()) : 0L;
         String text = (String) body.getOrDefault("questionText", "");
         String ans  = (String) body.getOrDefault("correctAnswer", "");
+        @SuppressWarnings("unchecked")
+        java.util.List<String> options = body.containsKey("allOptions")
+                ? (java.util.List<String>) body.get("allOptions")
+                : java.util.List.of();
 
-        String explanation = aiService.explainQuestion(qId, text, ans);
-        return ResponseEntity.ok(ApiResponse.success("Explanation", Map.of(
-                "explanation", explanation,
-                "aiUsed",      aiService.isAvailable())));
+        Map<String, Object> result = aiServiceImpl.explainQuestion(qId, text, ans, options);
+        return ResponseEntity.ok(ApiResponse.success("Explanation", result));
     }
 
     @PostMapping("/analyze-performance")
@@ -105,5 +119,29 @@ public class AIController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> status() {
         return ResponseEntity.ok(ApiResponse.success("AI status", Map.of(
                 "available", aiService.isAvailable())));
+    }
+
+    // ── Phase 47: AI Question Generation (admin only) ─────────────────────
+
+    @PostMapping("/generate-questions")
+    @Operation(summary = "Generate questions as DRAFT — admin review required before publishing")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> generateQuestions(
+            @RequestBody Map<String, Object> body) {
+
+        Long   topicId     = body.containsKey("topicId") ? Long.valueOf(body.get("topicId").toString()) : 0L;
+        String examName    = (String) body.getOrDefault("examName",    "Competitive Exam");
+        String subjectName = (String) body.getOrDefault("subjectName", "General");
+        String topicName   = (String) body.getOrDefault("topicName",   "General");
+        String difficulty  = (String) body.getOrDefault("difficulty",  "MEDIUM");
+        String language    = (String) body.getOrDefault("language",    "EN");
+        int    count       = Integer.parseInt(body.getOrDefault("count", "5").toString());
+
+        if (count > 20) count = 20; // cap per request
+
+        Map<String, Object> result = aiServiceImpl.generateQuestions(
+                topicId, examName, subjectName, topicName, difficulty, language, count);
+
+        return ResponseEntity.ok(ApiResponse.success("Questions generated", result));
     }
 }
