@@ -8,8 +8,9 @@ COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
 # Build the application
+# Note: COPY src invalidates cache when ANY source file changes (migrations included)
 COPY src ./src
-RUN mvn clean package -DskipTests -B
+RUN mvn clean package -DskipTests -B --no-transfer-progress
 
 # ── Run stage ─────────────────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jre
