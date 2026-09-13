@@ -1,50 +1,54 @@
-version: '3.8'
+version: "3.9"
+
+# ── Development Docker Compose ──────────────────────────────────────────────
+# Sirf MySQL + Redis run karta hai development mein
+# Backend + Frontend alag se run karo (npm run dev / mvn spring-boot:run)
 
 services:
+  # ── MySQL 8 ──────────────────────────────────────────────────────────────
   mysql:
     image: mysql:8.0
     container_name: rapidstudy-mysql
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: ${DB_NAME:-rapidstudy}
-      MYSQL_USER: ${DB_USERNAME:-rapidstudy_user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE:      ${DB_NAME:-rapidstudy}
+      MYSQL_USER:          ${DB_USERNAME:-rapidstudy_user}
+      MYSQL_PASSWORD:      ${DB_PASSWORD:-rapidstudy_password}
     ports:
-      - "3307:3306"
+      - "${DB_PORT:-3306}:3306"
     volumes:
-      - mysql-data:/var/lib/mysql
-    networks:
-      - rapidstudy-network
+      - mysql_data:/var/lib/mysql
+      - ./scripts/create-admin.sql:/docker-entrypoint-initdb.d/99_admin.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
+  # ── Redis 7 ──────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: rapidstudy-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
-      - redis-data:/data
-    networks:
-      - rapidstudy-network
+      - redis_data:/data
+    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
-      retries: 5
+      retries: 3
 
 volumes:
-  mysql-data:
+  mysql_data:
     driver: local
-  redis-data:
+  redis_data:
     driver: local
 
 networks:
-  rapidstudy-network:
-    driver: bridge
+  default:
+    name: rapidstudy-network

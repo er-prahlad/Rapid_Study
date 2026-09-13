@@ -145,11 +145,54 @@ public class QuestionService {
 
     @Transactional
     public ImportResultDto importQuestions(MultipartFile file) {
+        // Phase 58: File validation — extension + size + content
+        validateUploadedFile(file);
+
         String name = file.getOriginalFilename() != null
                 ? file.getOriginalFilename().toLowerCase() : "";
         if (name.endsWith(".csv"))  return importCsv(file);
         if (name.endsWith(".xlsx") || name.endsWith(".xls")) return importXlsx(file);
         throw new BadRequestException("Unsupported file. Use .csv or .xlsx");
+    }
+
+    /**
+     * Phase 58: File upload validation.
+     * Validates: extension, MIME type, file size, not empty.
+     * Never executes the uploaded file.
+     */
+    private void validateUploadedFile(MultipartFile file) {
+        if (file == null || file.isEmpty())
+            throw new BadRequestException("File is empty");
+
+        // Size limit: 5MB
+        long maxBytes = 5 * 1024 * 1024L;
+        if (file.getSize() > maxBytes)
+            throw new BadRequestException("File too large. Maximum size is 5MB");
+
+        String original = file.getOriginalFilename() != null
+                ? file.getOriginalFilename().toLowerCase() : "";
+
+        // Extension check
+        if (!original.endsWith(".csv") && !original.endsWith(".xlsx") && !original.endsWith(".xls"))
+            throw new BadRequestException("Invalid file extension. Only .csv and .xlsx are allowed");
+
+        // MIME type check (never trust client-provided content type alone)
+        String contentType = file.getContentType();
+        if (contentType != null) {
+            boolean validMime = contentType.equals("text/csv")
+                    || contentType.equals("application/vnd.ms-excel")
+                    || contentType.equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                    || contentType.equals("application/csv")
+                    || contentType.equals("text/plain");  // some browsers send CSV as text/plain
+            if (!validMime) {
+                log.warn("Suspicious MIME type for file upload: {}", contentType);
+                // Warn but don't block — extension check is more reliable
+            }
+        }
+
+        // Filename sanitization — prevent path traversal
+        if (original.contains("..") || original.contains("/") || original.contains("\\"))
+            throw new BadRequestException("Invalid file name");
     }
 
     // ── CSV ──────────────────────────────────────────────────────────

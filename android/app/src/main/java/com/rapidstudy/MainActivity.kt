@@ -3,71 +3,141 @@ package com.rapidstudy
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.activity.viewModels
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.rapidstudy.data.local.TokenManager
+import com.rapidstudy.data.model.DashboardResponse
+import com.rapidstudy.data.remote.RetrofitClient
+import com.rapidstudy.ui.screens.*
 import com.rapidstudy.ui.theme.RapidStudyTheme
+import com.rapidstudy.ui.viewmodel.AuthViewModel
+import com.rapidstudy.ui.viewmodel.HomeViewModel
+import com.rapidstudy.ui.viewmodel.UiState
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import com.rapidstudy.data.remote.ApiService
 
+/**
+ * Phase 49: Main entry point
+ * Splash → Login/Register (agar token nahi) → Main (agar token hai)
+ */
 class MainActivity : ComponentActivity() {
+
+    private lateinit var tokenManager: TokenManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        tokenManager = TokenManager(applicationContext)
+        val apiService = RetrofitClient.create(tokenManager)
+
+        val authViewModel: AuthViewModel by viewModels {
+            object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    @Suppress("UNCHECKED_CAST")
+                    return AuthViewModel(apiService, tokenManager) as T
+                }
+            }
+        }
+
+        val homeViewModel: HomeViewModel by viewModels {
+            object : ViewModelProvider.Factory {
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    @Suppress("UNCHECKED_CAST")
+                    return HomeViewModel(apiService) as T
+                }
+            }
+        }
+
         setContent {
             RapidStudyTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    WelcomeScreen()
-                }
+                RapidStudyApp(
+                    tokenManager  = tokenManager,
+                    authViewModel = authViewModel,
+                    homeViewModel = homeViewModel,
+                    apiService = apiService
+                )
             }
         }
     }
 }
 
+// ── App navigation controller ──────────────────────────────────────────────────
+
+enum class AppScreen { SPLASH, LOGIN, REGISTER, MAIN }
+
 @Composable
-fun WelcomeScreen() {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "RapidStudy",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "Prepare • Practice • Perform",
-                fontSize = 16.sp,
-                modifier = Modifier.padding(top = 8.dp)
-            )
-            Text(
-                text = "Android app skeleton initialized ✓",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 32.dp)
-            )
+fun RapidStudyApp(
+    tokenManager:  TokenManager,
+    authViewModel: AuthViewModel,
+    homeViewModel: HomeViewModel,
+    apiService: ApiService
+) {
+    var currentScreen by remember { mutableStateOf(AppScreen.SPLASH) }
+
+    val loginState    by authViewModel.loginState.collectAsStateWithLifecycle()
+    val registerState by authViewModel.registerState.collectAsStateWithLifecycle()
+    val dashboardState by homeViewModel.dashboard.collectAsStateWithLifecycle()
+    val userName by tokenManager.userName.collectAsStateWithLifecycle(initialValue = "Student")
+
+    // Login/Register success → go to Main
+    LaunchedEffect(loginState) {
+        if (loginState is UiState.Success) {
+            currentScreen = AppScreen.MAIN
+            homeViewModel.loadDashboard()
         }
     }
-}
+    LaunchedEffect(registerState) {
+        if (registerState is UiState.Success) {
+            currentScreen = AppScreen.MAIN
+            homeViewModel.loadDashboard()
+        }
+    }
 
-@Preview(showBackground = true)
-@Composable
-fun WelcomeScreenPreview() {
-    RapidStudyTheme {
-        WelcomeScreen()
+    when (currentScreen) {
+        AppScreen.SPLASH -> {
+            SplashScreen(onComplete = {
+                // Token check karo
+                val hasToken = runBlocking { tokenManager.isLoggedIn() }
+                currentScreen = if (hasToken) AppScreen.MAIN else AppScreen.LOGIN
+                if (hasToken) homeViewModel.loadDashboard()
+            })
+        }
+
+        AppScreen.LOGIN -> {
+            LoginScreen(
+                onLogin       = { email, password -> authViewModel.login(email, password) },
+                onGoRegister  = { currentScreen = AppScreen.REGISTER },
+                isLoading     = loginState is UiState.Loading,
+                errorMessage  = (loginState as? UiState.Error)?.message
+            )
+        }
+
+        AppScreen.REGISTER -> {
+            RegisterScreen(
+                onRegister    = { name, email, password, phone -> authViewModel.register(name, email, password, phone) },
+                onGoLogin     = { currentScreen = AppScreen.LOGIN },
+                isLoading     = registerState is UiState.Loading,
+                errorMessage  = (registerState as? UiState.Error)?.message
+            )
+        }
+
+        AppScreen.MAIN -> {
+            val dashboard = (dashboardState as? UiState.Success<DashboardResponse>)?.data
+            MainScreen(
+                dashboard  = dashboard,
+                userName   = userName ?: "Student",
+                apiService = apiService,
+                onRefresh  = { homeViewModel.loadDashboard() },
+                onLogout   = {
+                    authViewModel.logout()
+                    currentScreen = AppScreen.LOGIN
+                }
+            )
+        }
     }
 }

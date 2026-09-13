@@ -1,6 +1,7 @@
 package com.rapidstudy.config;
 
 import com.rapidstudy.security.JwtAuthenticationFilter;
+import com.rapidstudy.config.RateLimitFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -44,6 +45,7 @@ public class SecurityConfig {
     private final CorsConfigurationSource       corsConfigurationSource;
     private final JwtAuthenticationFilter        jwtAuthenticationFilter;
     private final UserDetailsService             userDetailsService;
+    private final RateLimitFilter                rateLimitFilter;
 
     // ---------------------------------------------------------------
     // Security filter chain
@@ -116,6 +118,8 @@ public class SecurityConfig {
             // Plug in the DaoAuthenticationProvider
             .authenticationProvider(authenticationProvider())
 
+            // Rate limiting filter (auth endpoints)
+            .addFilterBefore(rateLimitFilter,         UsernamePasswordAuthenticationFilter.class)
             // JWT filter runs before Spring's username/password filter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
