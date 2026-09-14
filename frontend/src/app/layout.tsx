@@ -32,12 +32,14 @@ export default function RootLayout({
       className={inter.variable}
     >
       <body className={inter.className}>
+        {/* Phase 69: Skip link for keyboard navigation */}
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <QueryProvider>
           <AuthProvider>
             <ScrollToTop />
-
             {children}
-
             <Toaster />
           </AuthProvider>
         </QueryProvider>

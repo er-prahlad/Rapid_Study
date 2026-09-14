@@ -1,19 +1,38 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL
     driver-class-name: org.h2.Driver
     username: sa
-    password:
-  
+    password: ""
+
   jpa:
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
-  
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
   flyway:
-    enabled: false
+    enabled: false  # Test mein Flyway skip karo — JPA create-drop use karta hai
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 app:
   jwt:
-    secret: test_secret_key_minimum_32_characters_for_security_testing
+    secret: dGVzdFNlY3JldEtleUZvclJhcGlkU3R1ZHlUZXN0aW5nMTIzNDU2Nzg5MA==
     expiration: 86400000
+    refresh-expiration: 604800000
+  cors:
+    allowed-origins: http://localhost:3000
+  ai:
+    enabled: false
+    api-key: ""
+
+logging:
+  level:
+    root: WARN
+    com.rapidstudy: INFO
