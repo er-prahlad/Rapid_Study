@@ -11,18 +11,21 @@ type RoleFilter = '' | 'STUDENT' | 'ADMIN';
 
 export default function UsersPage() {
   const qc = useQueryClient();
-  const [page, setPage]           = useState(0);
-  const [search, setSearch]       = useState('');
-  const [roleFilter, setRole]     = useState<RoleFilter>('');
+  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRole] = useState<RoleFilter>('');
   const [activeFilter, setActive] = useState<'' | 'true' | 'false'>('');
-  const [selected, setSelected]   = useState<AdminUser | null>(null);
-  const [alert, setAlert]         = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [selected, setSelected] = useState<AdminUser | null>(null);
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedSearch = useCallback(debounce((v: string) => {
-    setSearch(v);
-    setPage(0);
-  }, 400), []);
+  const debouncedSearch = useCallback(
+    debounce((v: unknown) => {
+      setSearch(String(v));
+      setPage(0);
+    }, 400),
+    []
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-users', page, search, roleFilter, activeFilter],
@@ -85,7 +88,7 @@ export default function UsersPage() {
           id="users-role-filter"
           options={[
             { value: 'STUDENT', label: 'Student' },
-            { value: 'ADMIN',   label: 'Admin' },
+            { value: 'ADMIN', label: 'Admin' },
           ]}
           placeholder="All Roles"
           value={roleFilter}
@@ -95,7 +98,7 @@ export default function UsersPage() {
         <Select
           id="users-status-filter"
           options={[
-            { value: 'true',  label: 'Active' },
+            { value: 'true', label: 'Active' },
             { value: 'false', label: 'Inactive' },
           ]}
           placeholder="All Status"
@@ -220,7 +223,7 @@ export default function UsersPage() {
           onChange={e => setNewRole(e.target.value)}
           options={[
             { value: 'STUDENT', label: 'Student' },
-            { value: 'ADMIN',   label: 'Admin' },
+            { value: 'ADMIN', label: 'Admin' },
           ]}
         />
       </Modal>
