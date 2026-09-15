@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/leaderboard")
+@RequestMapping({"/api/v1/leaderboard", "/api/leaderboard"})
 @RequiredArgsConstructor
 @Tag(name = "Leaderboard", description = "Redis-cached leaderboard")
 @SecurityRequirement(name = "bearerAuth")

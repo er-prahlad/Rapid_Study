@@ -28,7 +28,7 @@ import java.util.Map;
  * POST /api/v1/ai/personalized-test      — test recommendations
  */
 @RestController
-@RequestMapping("/api/v1/ai")
+@RequestMapping({"/api/v1/ai", "/api/ai"})
 @RequiredArgsConstructor
 @Tag(name = "AI", description = "AI-powered features (optional — degrades gracefully)")
 @SecurityRequirement(name = "bearerAuth")

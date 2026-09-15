@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.*;
  * DELETE /api/v1/admin/topics/{id}        — delete topic
  */
 @RestController
-@RequestMapping("/api/v1/admin")
+@RequestMapping({"/api/v1/admin", "/api/admin"})
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Admin — Exams", description = "Admin exam, subject and topic management")
@@ -72,6 +72,13 @@ public class AdminExamController {
             @PathVariable Long id,
             @Valid @RequestBody ExamRequest req) {
         return ResponseEntity.ok(ApiResponse.success("Exam updated", examService.updateExam(id, req)));
+    }
+
+    @DeleteMapping("/exams/{id}")
+    @Operation(summary = "Delete / deactivate an exam")
+    public ResponseEntity<ApiResponse<Void>> deleteExam(@PathVariable Long id) {
+        examService.deactivateExam(id);
+        return ResponseEntity.ok(ApiResponse.success("Exam deleted", null));
     }
 
     @PatchMapping("/exams/{id}/deactivate")

@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
  * GET  /api/v1/auth/me         — return current user profile (requires JWT)
  */
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping({"/api/v1/auth", "/api/auth"})
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "Register, login, refresh token, and profile")
 public class AuthController {

@@ -45,7 +45,7 @@ public class TestAttemptController {
 
     // ── Start a new attempt (Phase 23) ────────────────────────────────
 
-    @PostMapping("/api/v1/tests/{testId}/attempts")
+    @PostMapping({"/api/v1/tests/{testId}/attempts", "/api/tests/{testId}/attempts"})
     @Operation(
         summary = "Start a test attempt",
         description = "Creates a new attempt. expiresAt is server-controlled. " +
@@ -62,7 +62,7 @@ public class TestAttemptController {
 
     // ── Get attempt status + question palette (Phase 23 + 25) ─────────
 
-    @GetMapping("/api/v1/attempts/{id}")
+    @GetMapping({"/api/v1/attempts/{id}", "/api/attempts/{id}"})
     @Operation(
         summary = "Get attempt status and question palette",
         description = "Returns remaining time (server-calculated) and question states " +
@@ -77,7 +77,7 @@ public class TestAttemptController {
 
     // ── Save answer (Phase 25 + Phase 26) ────────────────────────────
 
-    @PutMapping("/api/v1/attempts/{id}/answers/{questionId}")
+    @PutMapping({"/api/v1/attempts/{id}/answers/{questionId}", "/api/attempts/{id}/answers/{questionId}"})
     @Operation(
         summary = "Save or update an answer",
         description = "Accepts only selectedOptionId. Backend validates option belongs " +
@@ -94,7 +94,7 @@ public class TestAttemptController {
 
     // ── Clear answer (Phase 25 + Phase 27) ───────────────────────────
 
-    @DeleteMapping("/api/v1/attempts/{id}/answers/{questionId}")
+    @DeleteMapping({"/api/v1/attempts/{id}/answers/{questionId}", "/api/attempts/{id}/answers/{questionId}"})
     @Operation(summary = "Clear a saved answer")
     public ResponseEntity<ApiResponse<Void>> clearAnswer(
             @PathVariable Long id,
@@ -107,7 +107,7 @@ public class TestAttemptController {
 
     // ── Mark for review (Phase 25 + Phase 27) ────────────────────────
 
-    @PutMapping("/api/v1/attempts/{id}/questions/{questionId}/review")
+    @PutMapping({"/api/v1/attempts/{id}/questions/{questionId}/review", "/api/attempts/{id}/questions/{questionId}/review"})
     @Operation(summary = "Mark a question for review")
     public ResponseEntity<ApiResponse<QuestionStateDto>> markForReview(
             @PathVariable Long id,
@@ -118,7 +118,7 @@ public class TestAttemptController {
         return ResponseEntity.ok(ApiResponse.success("Marked for review", state));
     }
 
-    @DeleteMapping("/api/v1/attempts/{id}/questions/{questionId}/review")
+    @DeleteMapping({"/api/v1/attempts/{id}/questions/{questionId}/review", "/api/attempts/{id}/questions/{questionId}/review"})
     @Operation(summary = "Remove review mark from a question")
     public ResponseEntity<ApiResponse<QuestionStateDto>> unmarkReview(
             @PathVariable Long id,
@@ -131,7 +131,7 @@ public class TestAttemptController {
 
     // ── Submit attempt + server-side scoring (Phase 28) ──────────────
 
-    @PostMapping("/api/v1/attempts/{id}/submit")
+    @PostMapping({"/api/v1/attempts/{id}/submit", "/api/attempts/{id}/submit"})
     @Operation(
         summary = "Submit a test attempt",
         description = "Server calculates all scores. Prevents duplicate submission. " +
@@ -146,7 +146,7 @@ public class TestAttemptController {
 
     // ── Full result with per-question breakdown (Phase 29) ────────────
 
-    @GetMapping("/api/v1/attempts/{id}/result")
+    @GetMapping({"/api/v1/attempts/{id}/result", "/api/attempts/{id}/result"})
     @Operation(
         summary = "Get full result after submission",
         description = "Returns correct answers and explanations. " +
@@ -161,7 +161,7 @@ public class TestAttemptController {
 
     // ── Detailed analysis (Phase 30) ──────────────────────────────────
 
-    @GetMapping("/api/v1/attempts/{id}/analysis")
+    @GetMapping({"/api/v1/attempts/{id}/analysis", "/api/attempts/{id}/analysis"})
     @Operation(
         summary = "Get detailed analysis for a submitted attempt",
         description = "Returns subject, topic, difficulty, and time breakdowns.")

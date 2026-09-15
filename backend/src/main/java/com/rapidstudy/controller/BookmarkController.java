@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/bookmarks")
+@RequestMapping({"/api/v1/bookmarks", "/api/bookmarks"})
 @RequiredArgsConstructor
 @Tag(name = "Bookmarks", description = "Save and manage bookmarked questions")
 @SecurityRequirement(name = "bearerAuth")

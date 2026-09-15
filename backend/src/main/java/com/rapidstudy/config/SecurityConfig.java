@@ -80,6 +80,7 @@ public class SecurityConfig {
                 .requestMatchers(
                         "/health",
                         "/api/v1/auth/**",
+                        "/api/auth/**",
                         "/v3/api-docs/**",
                         "/swagger-ui/**",
                         "/swagger-ui.html",
@@ -91,25 +92,35 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET,
                         "/api/v1/exams",
                         "/api/v1/exams/**",
+                        "/api/exams",
+                        "/api/exams/**",
                         "/api/v1/tests",
                         "/api/v1/tests/**",
-                        "/api/v1/search"
+                        "/api/tests",
+                        "/api/tests/**",
+                        "/api/v1/questions",
+                        "/api/v1/questions/**",
+                        "/api/questions",
+                        "/api/questions/**",
+                        "/api/v1/search",
+                        "/api/search"
                 ).permitAll()
 
                 // ── ADMIN ONLY ───────────────────────────────────────────
-                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/admin/**", "/api/admin/**").hasRole("ADMIN")
 
                 // ── STUDENT + ADMIN (any authenticated user) ─────────────
                 .requestMatchers(
-                        "/api/v1/student/**",
-                        "/api/v1/tests/**",
-                        "/api/v1/attempts/**",
-                        "/api/v1/practice/**",
-                        "/api/v1/bookmarks/**",
-                        "/api/v1/leaderboard/**",
-                        "/api/v1/study-plan/**",
-                        "/api/v1/notifications/**",
-                        "/api/v1/ai/**"
+                        "/api/v1/student/**",     "/api/student/**",
+                        "/api/v1/tests/**",       "/api/tests/**",
+                        "/api/v1/attempts/**",    "/api/attempts/**",
+                        "/api/v1/questions/**",   "/api/questions/**",
+                        "/api/v1/practice/**",    "/api/practice/**",
+                        "/api/v1/bookmarks/**",   "/api/bookmarks/**",
+                        "/api/v1/leaderboard/**", "/api/leaderboard/**",
+                        "/api/v1/study-plan/**",  "/api/study-plan/**",
+                        "/api/v1/notifications/**", "/api/notifications/**",
+                        "/api/v1/ai/**",          "/api/ai/**"
                 ).authenticated()
 
                 // ── EVERYTHING ELSE requires authentication ───────────────

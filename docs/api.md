@@ -1,645 +1,241 @@
-# RapidStudy - API Documentation
+# RapidStudy — Complete API Reference (Phase 73)
 
 ## Base URL
+- **Primary / Compatibility:** `http://localhost:8080/api`
+- **Versioned:** `http://localhost:8080/api/v1`
+- **Production:** `https://api.rapidstudy.in/api`
 
-**Development:** `http://localhost:8080/api`  
-**Production:** `https://api.rapidstudy.com/api`
+> All endpoints support both `/api/...` and `/api/v1/...` prefixes.
 
-## Authentication
+---
 
-All protected endpoints require a JWT token in the Authorization header:
-
+## Global Headers & Authentication
+For protected routes, include the Bearer JWT token in the `Authorization` header:
+```http
+Authorization: Bearer <jwt_access_token>
+Content-Type: application/json
 ```
-Authorization: Bearer <jwt_token>
-```
 
-## Standard Response Format
-
-### Success Response
+### Standard API Envelope
+Every endpoint returns a unified response envelope:
 ```json
 {
   "success": true,
+  "message": "Operation completed successfully",
   "data": { ... },
-  "message": "Operation successful"
+  "timestamp": "2026-09-15T11:00:00"
 }
 ```
 
-### Error Response
+---
+
+## 1. Authentication (`AUTH`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `POST` | `/api/auth/register` | Register student account | Public |
+| `POST` | `/api/auth/login` | Login with email and password | Public |
+| `POST` | `/api/auth/refresh` | Refresh access token using refresh token | Public |
+| `POST` | `/api/auth/logout` | Client token revocation signal | Authenticated |
+| `GET` | `/api/auth/me` | Fetch authenticated user profile | Authenticated |
+
+#### `POST /api/auth/register`
 ```json
 {
-  "success": false,
-  "message": "Error description",
-  "timestamp": "2026-08-21T10:30:00Z",
-  "path": "/api/endpoint"
-}
-```
-
-## API Endpoints
-
-### Authentication
-
-#### Register
-```
-POST /api/auth/register
-```
-
-**Request:**
-```json
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "phone": "+919876543210",
-  "password": "SecurePass123",
-  "confirmPassword": "SecurePass123",
+  "name": "Ravi Kumar",
+  "email": "ravi@example.com",
+  "password": "Password@123",
   "language": "EN"
 }
 ```
 
-**Response:**
+#### `POST /api/auth/login`
 ```json
 {
-  "success": true,
-  "data": {
-    "token": "jwt_token_here",
-    "refreshToken": "refresh_token_here",
-    "user": {
-      "id": 1,
-      "name": "John Doe",
-      "email": "john@example.com",
-      "role": "STUDENT",
-      "language": "EN"
-    }
-  }
+  "email": "ravi@example.com",
+  "password": "Password@123"
 }
 ```
-
-#### Login
-```
-POST /api/auth/login
-```
-
-**Request:**
+**Response Data:**
 ```json
 {
-  "email": "john@example.com",
-  "password": "SecurePass123"
-}
-```
-
-**Response:** Same as Register
-
-#### Refresh Token
-```
-POST /api/auth/refresh
-```
-
-**Request:**
-```json
-{
-  "refreshToken": "refresh_token_here"
-}
-```
-
-#### Get Current User
-```
-GET /api/auth/me
-Authorization: Bearer <token>
-```
-
-#### Logout
-```
-POST /api/auth/logout
-Authorization: Bearer <token>
-```
-
----
-
-### Student Dashboard
-
-#### Get Dashboard Data
-```
-GET /api/student/dashboard
-Authorization: Bearer <token>
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "dailyTarget": {
-      "questionsTarget": 50,
-      "questionsCompleted": 32,
-      "testsTarget": 1,
-      "testsCompleted": 0
-    },
-    "currentStreak": 7,
-    "performance": {
-      "averageScore": 75.5,
-      "accuracy": 82.3,
-      "testsAttempted": 15,
-      "bestScore": 95.0
-    },
-    "upcomingTests": [...],
-    "recentPerformance": [...],
-    "popularExams": [...]
-  }
-}
-```
-
----
-
-### Exams
-
-#### List All Exams
-```
-GET /api/exams?page=0&size=10&search=ssc
-```
-
-**Query Parameters:**
-- `page` (optional): Page number (default: 0)
-- `size` (optional): Page size (default: 10)
-- `search` (optional): Search term
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "content": [
-      {
-        "id": 1,
-        "name": "SSC CGL",
-        "code": "SSC_CGL",
-        "description": "Combined Graduate Level Exam",
-        "logo": "url_to_logo",
-        "isActive": true
-      }
-    ],
-    "pageable": {
-      "pageNumber": 0,
-      "pageSize": 10,
-      "totalElements": 1,
-      "totalPages": 1
-    }
-  }
-}
-```
-
-#### Get Exam Details
-```
-GET /api/exams/{id}
-```
-
-#### Get Exam Subjects
-```
-GET /api/exams/{id}/subjects
-```
-
-#### Get Exam Tests
-```
-GET /api/exams/{id}/tests?page=0&size=10
-```
-
----
-
-### Questions
-
-#### Get Questions
-```
-GET /api/questions?topicId=5&difficulty=MEDIUM&page=0&size=20
-```
-
-**Query Parameters:**
-- `topicId` (optional)
-- `difficulty` (optional): EASY, MEDIUM, HARD
-- `page`, `size`
-
-#### Get Question By ID
-```
-GET /api/questions/{id}
-```
-
----
-
-### Mock Tests
-
-#### List Tests
-```
-GET /api/tests?examId=1&page=0&size=10
-```
-
-#### Get Test Details
-```
-GET /api/tests/{id}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "title": "SSC CGL Mock Test 1",
-    "description": "Full length mock test",
-    "durationMinutes": 120,
-    "totalQuestions": 100,
-    "totalMarks": 200,
-    "negativeMarks": 0.5,
-    "isPublished": true,
-    "exam": {
-      "id": 1,
-      "name": "SSC CGL"
-    }
-  }
-}
-```
-
-#### Start Test Attempt
-```
-POST /api/tests/{testId}/attempts
-Authorization: Bearer <token>
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "attemptId": 123,
-    "startedAt": "2026-08-21T10:00:00Z",
-    "expiresAt": "2026-08-21T12:00:00Z",
-    "questions": [
-      {
-        "id": 1,
-        "questionText": "What is 2+2?",
-        "questionTextHindi": "2+2 क्या है?",
-        "questionType": "MCQ",
-        "marks": 2,
-        "negativeMarks": 0.5,
-        "options": [
-          {
-            "id": 1,
-            "optionText": "3",
-            "optionTextHindi": "3",
-            "optionOrder": 1
-          },
-          {
-            "id": 2,
-            "optionText": "4",
-            "optionTextHindi": "4",
-            "optionOrder": 2
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
----
-
-### Test Attempts
-
-#### Get Attempt Details
-```
-GET /api/attempts/{attemptId}
-Authorization: Bearer <token>
-```
-
-#### Save Answer
-```
-PUT /api/attempts/{attemptId}/answers/{questionId}
-Authorization: Bearer <token>
-```
-
-**Request:**
-```json
-{
-  "selectedOptionId": 2
-}
-```
-
-#### Clear Answer
-```
-DELETE /api/attempts/{attemptId}/answers/{questionId}
-Authorization: Bearer <token>
-```
-
-#### Mark for Review
-```
-PUT /api/attempts/{attemptId}/questions/{questionId}/review
-Authorization: Bearer <token>
-```
-
-**Request:**
-```json
-{
-  "markedForReview": true
-}
-```
-
-#### Submit Test
-```
-POST /api/attempts/{attemptId}/submit
-Authorization: Bearer <token>
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "attemptId": 123,
-    "score": 150.5,
-    "totalMarks": 200,
-    "percentage": 75.25,
-    "correct": 80,
-    "wrong": 15,
-    "unanswered": 5,
-    "timeTaken": 7200,
-    "rank": 45
-  }
-}
-```
-
----
-
-### Results & Analytics
-
-#### Get Result
-```
-GET /api/attempts/{attemptId}/result
-Authorization: Bearer <token>
-```
-
-#### Get Detailed Analysis
-```
-GET /api/attempts/{attemptId}/analysis
-Authorization: Bearer <token>
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "overall": {
-      "score": 150.5,
-      "accuracy": 84.2,
-      "timeTaken": 7200
-    },
-    "subjectWise": [
-      {
-        "subjectName": "Quantitative Aptitude",
-        "correct": 20,
-        "wrong": 3,
-        "unanswered": 2,
-        "accuracy": 87.0,
-        "avgTime": 65
-      }
-    ],
-    "difficultyWise": [...],
-    "scoreHistory": [...]
-  }
-}
-```
-
----
-
-### Practice
-
-#### Get Practice Questions
-```
-GET /api/practice/questions?mode=RANDOM&topicId=5&difficulty=MEDIUM
-Authorization: Bearer <token>
-```
-
-**Query Parameters:**
-- `mode`: RANDOM, SUBJECT, TOPIC, WEAK_AREA
-- `topicId`, `subjectId`, `difficulty`
-
----
-
-### Bookmarks
-
-#### Get Bookmarks
-```
-GET /api/bookmarks?page=0&size=20
-Authorization: Bearer <token>
-```
-
-#### Add Bookmark
-```
-POST /api/bookmarks/{questionId}
-Authorization: Bearer <token>
-```
-
-#### Remove Bookmark
-```
-DELETE /api/bookmarks/{questionId}
-Authorization: Bearer <token>
-```
-
----
-
-### Leaderboard
-
-#### Get Leaderboard
-```
-GET /api/leaderboard?period=WEEKLY&testId=1
-```
-
-**Query Parameters:**
-- `period`: DAILY, WEEKLY, MONTHLY, ALL_TIME
-- `testId` (optional): Specific test leaderboard
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "rank": 1,
-      "name": "John Doe",
-      "profileImage": "url",
-      "score": 95.5,
-      "tests": 25,
-      "accuracy": 89.2
-    }
-  ]
-}
-```
-
----
-
-### Study Plan
-
-#### Get Study Plan
-```
-GET /api/study-plan
-Authorization: Bearer <token>
-```
-
-#### Create Study Plan
-```
-POST /api/study-plan
-Authorization: Bearer <token>
-```
-
-**Request:**
-```json
-{
-  "title": "SSC CGL Preparation",
-  "startDate": "2026-09-01",
-  "endDate": "2026-12-31",
-  "targetTests": 50,
-  "targetQuestions": 5000
-}
-```
-
-#### Update Study Plan
-```
-PUT /api/study-plan/{id}
-Authorization: Bearer <token>
-```
-
-#### Delete Study Plan
-```
-DELETE /api/study-plan/{id}
-Authorization: Bearer <token>
-```
-
----
-
-### Notifications
-
-#### Get Notifications
-```
-GET /api/notifications?page=0&size=20
-Authorization: Bearer <token>
-```
-
-#### Mark as Read
-```
-PUT /api/notifications/{id}/read
-Authorization: Bearer <token>
-```
-
-#### Mark All as Read
-```
-PUT /api/notifications/read-all
-Authorization: Bearer <token>
-```
-
----
-
-### Admin Endpoints
-
-All admin endpoints require `ADMIN` role.
-
-#### User Management
-```
-GET    /api/admin/users
-GET    /api/admin/users/{id}
-PUT    /api/admin/users/{id}/status
-PUT    /api/admin/users/{id}/role
-```
-
-#### Exam Management
-```
-GET    /api/admin/exams
-POST   /api/admin/exams
-PUT    /api/admin/exams/{id}
-DELETE /api/admin/exams/{id}
-```
-
-#### Question Management
-```
-GET    /api/admin/questions
-POST   /api/admin/questions
-PUT    /api/admin/questions/{id}
-DELETE /api/admin/questions/{id}
-POST   /api/admin/questions/import
-```
-
-#### Test Management
-```
-GET    /api/admin/tests
-POST   /api/admin/tests
-PUT    /api/admin/tests/{id}
-DELETE /api/admin/tests/{id}
-POST   /api/admin/tests/{id}/publish
-POST   /api/admin/tests/{id}/unpublish
-```
-
-#### Analytics
-```
-GET /api/admin/analytics/dashboard
-```
-
----
-
-### AI Endpoints
-
-#### Explain Question
-```
-POST /api/ai/explain
-Authorization: Bearer <token>
-```
-
-**Request:**
-```json
-{
-  "questionId": 123
-}
-```
-
-#### Generate Questions
-```
-POST /api/admin/ai/generate-questions
-Authorization: Bearer <token> (Admin only)
-```
-
-**Request:**
-```json
-{
-  "topicId": 5,
-  "difficulty": "MEDIUM",
-  "count": 10,
+  "accessToken": "eyJhbGciOi...",
+  "refreshToken": "d8a7c2...",
+  "tokenType": "Bearer",
+  "userId": 1,
+  "role": "STUDENT",
   "language": "EN"
 }
 ```
 
-#### Analyze Performance
-```
-POST /api/ai/analyze-performance
-Authorization: Bearer <token>
+---
+
+## 2. Student Dashboard & Performance (`STUDENT`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/student/dashboard` | Student stats, streak, upcoming tests, recent activity | Student |
+| `GET` | `/api/student/performance` | Detailed accuracy, score trends, and subject breakdown | Student |
+
+---
+
+## 3. Exams Taxonomy (`EXAMS`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/exams` | Paginated list of active exams (`?search=&page=0&size=12`) | Public |
+| `GET` | `/api/exams/{id}` | Exam details with subjects and topics | Public |
+| `GET` | `/api/exams/{id}/subjects`| List subjects belonging to an exam | Public |
+| `GET` | `/api/exams/{id}/tests` | Published mock tests available for the exam | Public |
+
+---
+
+## 4. Question Bank (`QUESTIONS`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/questions` | List safe questions (`?topicId=&subjectId=&difficulty=&page=0&size=20`) | Authenticated |
+| `GET` | `/api/questions/{id}` | Retrieve safe question by ID (no correct answers exposed) | Authenticated |
+
+---
+
+## 5. Mock Tests (`TESTS`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/tests` | List published mock tests (`?examId=&search=&page=0&size=12`)| Public |
+| `GET` | `/api/tests/{id}` | Get test details and instructions | Public |
+| `POST` | `/api/tests/{id}/attempts` | Initiate a new test attempt (starts server timer) | Student |
+
+---
+
+## 6. Test Attempts Engine (`ATTEMPTS`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/attempts/{id}` | Current attempt status, remaining time, and palette | Student (Owner) |
+| `PUT` | `/api/attempts/{id}/answers/{questionId}` | Save or update selected option | Student (Owner) |
+| `DELETE` | `/api/attempts/{id}/answers/{questionId}` | Clear saved option for question | Student (Owner) |
+| `PUT` | `/api/attempts/{id}/questions/{questionId}/review` | Mark question for review | Student (Owner) |
+| `POST` | `/api/attempts/{id}/submit` | Final submission and server-side score calculation | Student (Owner) |
+
+#### `PUT /api/attempts/{id}/answers/{questionId}`
+```json
+{
+  "selectedOptionId": 104,
+  "timeSpentSeconds": 45
+}
 ```
 
 ---
 
-## Rate Limiting
+## 7. Results & Analysis (`RESULT`)
 
-- **Public endpoints:** 100 requests per minute
-- **Authenticated endpoints:** 200 requests per minute
-- **AI endpoints:** 10 requests per minute
-
-## Pagination
-
-All list endpoints support pagination:
-- `page`: Page number (0-indexed)
-- `size`: Items per page (max: 100)
-- `sort`: Sort field (e.g., `createdAt,desc`)
-
-## Swagger Documentation
-
-Interactive API documentation available at:
-```
-http://localhost:8080/swagger-ui.html
-```
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/attempts/{id}/result` | Full scorecard, solution keys, and explanations | Student (Owner) |
+| `GET` | `/api/attempts/{id}/analysis` | Subject/topic breakdown, accuracy, and timing insights | Student (Owner) |
 
 ---
 
-**Document Version:** 1.0  
-**Last Updated:** 2026-08-21
+## 8. Practice Mode (`PRACTICE`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/practice/questions` | Filtered practice questions (`?topicId=&difficulty=&page=0`) | Authenticated |
+
+---
+
+## 9. Bookmarks (`BOOKMARKS`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/bookmarks` | Get paginated bookmarked questions | Student |
+| `POST` | `/api/bookmarks/{questionId}` | Add question to bookmarks | Student |
+| `DELETE` | `/api/bookmarks/{questionId}`| Remove question from bookmarks | Student |
+
+---
+
+## 10. Leaderboard (`LEADERBOARD`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/leaderboard` | Top students ranking (`?period=DAILY|WEEKLY|MONTHLY|ALL_TIME`) | Authenticated |
+
+---
+
+## 11. Study Plans (`STUDY PLAN`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/study-plan` | Retrieve user study plans | Student |
+| `POST` | `/api/study-plan` | Create a new study plan milestone | Student |
+| `PUT` | `/api/study-plan/{id}` | Update existing study plan | Student |
+| `DELETE` | `/api/study-plan/{id}` | Delete a study plan | Student |
+
+---
+
+## 12. Notifications (`NOTIFICATIONS`)
+
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/notifications` | Get user notifications | Student |
+| `PUT` | `/api/notifications/{id}/read` | Mark individual notification as read | Student |
+| `PUT` | `/api/notifications/read-all` | Mark all notifications as read | Student |
+
+---
+
+## 13. Admin Management (`ADMIN`)
+
+> All admin routes require `hasRole('ADMIN')`.
+
+### User Administration
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/users` | List platform users with filter/search |
+| `PUT` | `/api/admin/users/{id}/status` | Activate or deactivate user account |
+| `PUT` | `/api/admin/users/{id}/role` | Change user role (`STUDENT`, `ADMIN`) |
+
+### Exam Administration
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/exams` | List all exams (active & inactive) |
+| `POST` | `/api/admin/exams` | Create a new exam |
+| `PUT` | `/api/admin/exams/{id}` | Update exam details |
+| `DELETE`| `/api/admin/exams/{id}` | Deactivate / soft-delete exam |
+
+### Question Bank Administration
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/questions` | List questions with full answers |
+| `POST` | `/api/admin/questions` | Create a new question with options |
+| `PUT` | `/api/admin/questions/{id}` | Update question and options |
+| `DELETE`| `/api/admin/questions/{id}` | Deactivate question |
+| `POST` | `/api/admin/questions/import` | Bulk import questions from XLSX/CSV file |
+
+### Mock Test Administration
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/tests` | List all tests (draft & published) |
+| `POST` | `/api/admin/tests` | Create a new mock test |
+| `PUT` | `/api/admin/tests/{id}` | Update test details (draft only) |
+| `DELETE`| `/api/admin/tests/{id}` | Delete test (draft only) |
+| `POST` | `/api/admin/tests/{id}/publish` | Publish test to students |
+| `POST` | `/api/admin/tests/{id}/unpublish` | Unpublish test |
+
+### Admin Analytics
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/admin/analytics` | Platform metrics, attempt graphs, and registration counts |
+
+---
+
+## 14. AI Engine (`AI`)
+
+| Method | Endpoint | Description | Rate Limit |
+|--------|----------|-------------|------------|
+| `POST` | `/api/ai/explain` | AI explanation for tricky questions | 10 req/min |
+| `POST` | `/api/ai/generate-questions`| Generate draft questions (Admin) | 10 req/min |
+| `POST` | `/api/ai/analyze-performance`| Personalized AI performance diagnosis | 10 req/min |
+| `POST` | `/api/ai/generate-study-plan`| Customized preparation timeline generator | 10 req/min |
+| `POST` | `/api/ai/personalized-test` | AI recommended practice test topics | 10 req/min |

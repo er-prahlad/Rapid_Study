@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/admin")
+@RequestMapping({"/api/v1/admin", "/api/admin"})
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Admin", description = "Admin dashboard and user management")
@@ -29,8 +29,8 @@ public class AdminController {
     private final AdminService adminService;
 
     // Phase 38
-    @GetMapping("/dashboard")
-    @Operation(summary = "Admin dashboard stats and charts")
+    @GetMapping({"/dashboard", "/analytics"})
+    @Operation(summary = "Admin dashboard and analytics stats and charts")
     public ResponseEntity<ApiResponse<AdminDashboardResponse>> dashboard() {
         return ResponseEntity.ok(ApiResponse.success("Dashboard loaded", adminService.getDashboard()));
     }
