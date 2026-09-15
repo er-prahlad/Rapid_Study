@@ -41,15 +41,21 @@ function ExamFormFields({ register, errors }: {
 
 export default function ExamsPage() {
   const qc = useQueryClient();
-  const [page, setPage]       = useState(0);
-  const [search, setSearch]   = useState('');
+  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState('');
   const [createOpen, setCreate] = useState(false);
-  const [editExam, setEdit]   = useState<ExamDto | null>(null);
+  const [editExam, setEdit] = useState<ExamDto | null>(null);
   const [deleteExam, setDelete] = useState<ExamDto | null>(null);
-  const [alert, setAlert]     = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedSearch = useCallback(debounce((v: string) => { setSearch(v); setPage(0); }, 400), []);
+  const debouncedSearch = useCallback(
+    debounce((v: unknown) => {
+      setSearch(String(v));
+      setPage(0);
+    }, 400),
+    []
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-exams', page, search],
@@ -60,7 +66,7 @@ export default function ExamsPage() {
   });
 
   const createForm = useForm<ExamForm>({ resolver: zodResolver(examSchema) });
-  const editForm   = useForm<ExamForm>({ resolver: zodResolver(examSchema) });
+  const editForm = useForm<ExamForm>({ resolver: zodResolver(examSchema) });
 
   const createMutation = useMutation({
     mutationFn: examsApi.create,
@@ -172,8 +178,8 @@ export default function ExamsPage() {
                 <div className="grid grid-cols-3 gap-2 text-center">
                   {[
                     { label: 'Subjects', value: exam.subjectCount },
-                    { label: 'Topics',   value: exam.topicCount },
-                    { label: 'Questions',value: exam.questionCount },
+                    { label: 'Topics', value: exam.topicCount },
+                    { label: 'Questions', value: exam.questionCount },
                   ].map(s => (
                     <div key={s.label} className="bg-muted/50 rounded-lg py-2">
                       <p className="text-sm font-bold text-foreground">{formatNumber(s.value)}</p>
