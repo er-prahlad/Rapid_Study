@@ -40,8 +40,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String ip   = getClientIp(request);
 
         // Auth endpoints — stricter (20 req/min per IP)
-        if (path.startsWith("/api/v1/auth/login") || path.startsWith("/api/v1/auth/register")
-                || path.startsWith("/api/auth/login") || path.startsWith("/api/auth/register")) {
+        if (path.startsWith("/api/v1/auth/login") || path.startsWith("/api/v1/auth/register")) {
             if (!rateLimitService.isAuthAllowed(ip)) {
                 sendRateLimitResponse(response, "Too many auth attempts. Please wait before trying again.");
                 return;

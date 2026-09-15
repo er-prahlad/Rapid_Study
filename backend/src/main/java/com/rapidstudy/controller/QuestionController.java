@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * GET /api/v1/practice/questions
  */
 @RestController
-@RequestMapping({"/api/v1/practice", "/api/practice"})
+@RequestMapping("/api/v1/practice")
 @RequiredArgsConstructor
 @Tag(name = "Practice", description = "Student practice question endpoints")
 public class QuestionController {

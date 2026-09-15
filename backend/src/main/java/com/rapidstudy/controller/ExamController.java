@@ -24,7 +24,7 @@ import java.util.List;
  * GET /api/v1/exams/{id}/tests         — published mock tests for exam
  */
 @RestController
-@RequestMapping({"/api/v1/exams", "/api/exams"})
+@RequestMapping("/api/v1/exams")
 @RequiredArgsConstructor
 @Tag(name = "Exams", description = "Exam listing and details")
 public class ExamController {

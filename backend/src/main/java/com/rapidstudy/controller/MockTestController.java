@@ -24,7 +24,7 @@ import java.util.List;
  * GET /api/v1/tests/{id}/questions — safe questions (Phase 23 — no answers)
  */
 @RestController
-@RequestMapping({"/api/v1/tests", "/api/tests"})
+@RequestMapping("/api/v1/tests")
 @RequiredArgsConstructor
 @Tag(name = "Tests", description = "Student mock test listing and instructions")
 public class MockTestController {

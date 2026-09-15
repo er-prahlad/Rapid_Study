@@ -31,7 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
  * POST   /api/v1/admin/questions/import        — CSV/XLSX import
  */
 @RestController
-@RequestMapping({"/api/v1/admin/questions", "/api/admin/questions"})
+@RequestMapping("/api/v1/admin/questions")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Admin — Questions", description = "Admin question bank management")
@@ -77,13 +77,6 @@ public class AdminQuestionController {
             @PathVariable Long id,
             @Valid @RequestBody QuestionRequest req) {
         return ResponseEntity.ok(ApiResponse.success("Question updated", questionService.updateQuestion(id, req)));
-    }
-
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Delete / deactivate a question")
-    public ResponseEntity<ApiResponse<Void>> deleteQuestion(@PathVariable Long id) {
-        questionService.deactivateQuestion(id);
-        return ResponseEntity.ok(ApiResponse.success("Question deleted", null));
     }
 
     @PatchMapping("/{id}/deactivate")

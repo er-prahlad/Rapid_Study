@@ -98,13 +98,6 @@ public class QuestionService {
         return toDto(q, true);
     }
 
-    /** Student: single question without answers */
-    @Transactional(readOnly = true)
-    public QuestionSafeDto getSafeById(Long id) {
-        Question q = findOrThrow(id);
-        return toSafeDto(q);
-    }
-
     @Transactional
     public QuestionDto createQuestion(QuestionRequest req) {
         validateRequest(req);

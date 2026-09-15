@@ -35,7 +35,7 @@ import java.util.List;
  * GET    /api/v1/admin/tests/{id}/questions           — list questions (with answers)
  */
 @RestController
-@RequestMapping({"/api/v1/admin/tests", "/api/admin/tests"})
+@RequestMapping("/api/v1/admin/tests")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "Admin — Tests", description = "Admin mock test builder")

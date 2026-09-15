@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping({"/api/v1/study-plan", "/api/study-plan"})
+@RequestMapping("/api/v1/study-plan")
 @RequiredArgsConstructor
 @Tag(name = "Study Plan", description = "Create and manage study plans")
 @SecurityRequirement(name = "bearerAuth")

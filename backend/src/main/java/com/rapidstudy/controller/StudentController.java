@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
  * GET /api/v1/student/performance  — performance stats (Phase 31)
  */
 @RestController
-@RequestMapping({"/api/v1/student", "/api/student"})
+@RequestMapping("/api/v1/student")
 @RequiredArgsConstructor
 @Tag(name = "Student", description = "Student dashboard and performance endpoints")
 @SecurityRequirement(name = "bearerAuth")

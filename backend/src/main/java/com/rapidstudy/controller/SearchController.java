@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
  * Public endpoint — no auth required.
  */
 @RestController
-@RequestMapping({"/api/v1/search", "/api/search"})
+@RequestMapping("/api/v1/search")
 @RequiredArgsConstructor
 @Tag(name = "Search", description = "Unified search across exams, tests, questions and topics")
 public class SearchController {
