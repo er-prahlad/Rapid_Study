@@ -11,12 +11,12 @@ import { formatDate, formatNumber, debounce } from '@/lib/utils';
 import type { MockTestDto } from '@/types/api';
 
 const testSchema = z.object({
-  title:           z.string().min(3, 'Title is required'),
-  description:     z.string().optional(),
-  examId:          z.string().min(1, 'Exam ID is required'),
+  title: z.string().min(3, 'Title is required'),
+  description: z.string().optional(),
+  examId: z.string().min(1, 'Exam ID is required'),
   durationMinutes: z.string().min(1, 'Duration is required'),
-  totalMarks:      z.string().min(1, 'Total marks is required'),
-  passingMarks:    z.string().min(1, 'Passing marks is required'),
+  totalMarks: z.string().min(1, 'Total marks is required'),
+  passingMarks: z.string().min(1, 'Passing marks is required'),
   negativeMarking: z.boolean(),
   negativeMarkValue: z.string(),
 });
@@ -30,13 +30,13 @@ function TestFormModal({ open, onClose, initial, onSave, loading }: {
   const { register, handleSubmit, watch, formState: { errors } } = useForm<TestForm>({
     resolver: zodResolver(testSchema),
     defaultValues: {
-      title:             initial?.title ?? '',
-      description:       initial?.description ?? '',
-      examId:            String(initial?.examId ?? ''),
-      durationMinutes:   String(initial?.durationMinutes ?? 60),
-      totalMarks:        String(initial?.totalMarks ?? 100),
-      passingMarks:      String(initial?.passingMarks ?? 40),
-      negativeMarking:   initial?.negativeMarking ?? false,
+      title: initial?.title ?? '',
+      description: initial?.description ?? '',
+      examId: String(initial?.examId ?? ''),
+      durationMinutes: String(initial?.durationMinutes ?? 60),
+      totalMarks: String(initial?.totalMarks ?? 100),
+      passingMarks: String(initial?.passingMarks ?? 40),
+      negativeMarking: initial?.negativeMarking ?? false,
       negativeMarkValue: String(initial?.negativeMarkValue ?? 0.25),
     },
   });
@@ -94,16 +94,22 @@ function TestFormModal({ open, onClose, initial, onSave, loading }: {
 
 export default function TestsPage() {
   const qc = useQueryClient();
-  const [page, setPage]         = useState(0);
-  const [search, setSearch]     = useState('');
+  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState('');
   const [createOpen, setCreate] = useState(false);
-  const [editTest, setEdit]     = useState<MockTestDto | null>(null);
+  const [editTest, setEdit] = useState<MockTestDto | null>(null);
   const [deleteTest, setDelete] = useState<MockTestDto | null>(null);
-  const [viewTest, setView]     = useState<MockTestDto | null>(null);
-  const [alert, setAlert]       = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [viewTest, setView] = useState<MockTestDto | null>(null);
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedSearch = useCallback(debounce((v: string) => { setSearch(v); setPage(0); }, 400), []);
+  const debouncedSearch = useCallback(
+    debounce((v: unknown) => {
+      setSearch(String(v));
+      setPage(0);
+    }, 400),
+    []
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-tests', page, search],
@@ -135,25 +141,25 @@ export default function TestsPage() {
   const createMutation = useMutation({
     mutationFn: (d: TestForm) => testsApi.create(toTestRequest(d)),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-tests'] }); setCreate(false); setAlert({ type: 'success', msg: 'Test created.' }); },
-    onError:   () => setAlert({ type: 'error', msg: 'Failed to create test.' }),
+    onError: () => setAlert({ type: 'error', msg: 'Failed to create test.' }),
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, d }: { id: number; d: TestForm }) => testsApi.update(id, toTestRequest(d)),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-tests'] }); setEdit(null); setAlert({ type: 'success', msg: 'Test updated.' }); },
-    onError:   () => setAlert({ type: 'error', msg: 'Failed to update test.' }),
+    onError: () => setAlert({ type: 'error', msg: 'Failed to update test.' }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: testsApi.delete,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-tests'] }); setDelete(null); setAlert({ type: 'success', msg: 'Test deleted.' }); },
-    onError:   () => setAlert({ type: 'error', msg: 'Failed to delete test.' }),
+    onError: () => setAlert({ type: 'error', msg: 'Failed to delete test.' }),
   });
 
   const publishMutation = useMutation({
     mutationFn: ({ id, pub }: { id: number; pub: boolean }) => pub ? testsApi.unpublish(id) : testsApi.publish(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-tests'] }); setAlert({ type: 'success', msg: 'Test status updated.' }); },
-    onError:   () => setAlert({ type: 'error', msg: 'Failed to update test status.' }),
+    onError: () => setAlert({ type: 'error', msg: 'Failed to update test status.' }),
   });
 
   return (
@@ -324,10 +330,10 @@ export default function TestsPage() {
               </div>
             </div>
           )) ?? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              No questions added yet.
-            </div>
-          )}
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No questions added yet.
+              </div>
+            )}
         </div>
       </Modal>
     </div>

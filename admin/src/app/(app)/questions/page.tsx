@@ -12,12 +12,12 @@ import type { QuestionDto } from '@/types/api';
 
 const qSchema = z.object({
   questionText: z.string().min(5, 'Question text is required'),
-  difficulty:   z.enum(['EASY', 'MEDIUM', 'HARD']),
-  topicId:      z.string().min(1, 'Topic ID is required'),
-  explanation:  z.string().optional(),
+  difficulty: z.enum(['EASY', 'MEDIUM', 'HARD']),
+  topicId: z.string().min(1, 'Topic ID is required'),
+  explanation: z.string().optional(),
   options: z.array(z.object({
     optionText: z.string().min(1, 'Option text is required'),
-    isCorrect:  z.boolean(),
+    isCorrect: z.boolean(),
   })).min(2, 'At least 2 options required'),
 });
 type QForm = z.infer<typeof qSchema>;
@@ -37,17 +37,17 @@ function QuestionFormModal({ open, onClose, initial, onSave, loading }: {
     resolver: zodResolver(qSchema),
     defaultValues: {
       questionText: initial?.questionText ?? '',
-      difficulty:   (initial?.difficulty as 'EASY' | 'MEDIUM' | 'HARD') ?? 'MEDIUM',
-      topicId:      String(initial?.topicId ?? ''),
-      explanation:  initial?.explanation ?? '',
+      difficulty: (initial?.difficulty as 'EASY' | 'MEDIUM' | 'HARD') ?? 'MEDIUM',
+      topicId: String(initial?.topicId ?? ''),
+      explanation: initial?.explanation ?? '',
       options: initial?.options?.length
         ? initial.options.map(o => ({ optionText: o.optionText, isCorrect: o.isCorrect }))
         : [
-            { optionText: '', isCorrect: false },
-            { optionText: '', isCorrect: false },
-            { optionText: '', isCorrect: false },
-            { optionText: '', isCorrect: false },
-          ],
+          { optionText: '', isCorrect: false },
+          { optionText: '', isCorrect: false },
+          { optionText: '', isCorrect: false },
+          { optionText: '', isCorrect: false },
+        ],
     },
   });
 
@@ -88,9 +88,9 @@ function QuestionFormModal({ open, onClose, initial, onSave, loading }: {
             id="q-difficulty"
             {...register('difficulty')}
             options={[
-              { value: 'EASY',   label: 'Easy' },
+              { value: 'EASY', label: 'Easy' },
               { value: 'MEDIUM', label: 'Medium' },
-              { value: 'HARD',   label: 'Hard' },
+              { value: 'HARD', label: 'Hard' },
             ]}
             error={errors.difficulty?.message}
           />
@@ -181,19 +181,25 @@ function QuestionFormModal({ open, onClose, initial, onSave, loading }: {
 
 export default function QuestionsPage() {
   const qc = useQueryClient();
-  const [page, setPage]           = useState(0);
-  const [search, setSearch]       = useState('');
+  const [page, setPage] = useState(0);
+  const [search, setSearch] = useState('');
   const [difficulty, setDifficulty] = useState('');
-  const [status, setStatus]       = useState('');
-  const [createOpen, setCreate]   = useState(false);
-  const [editQ, setEditQ]         = useState<QuestionDto | null>(null);
-  const [deleteQ, setDeleteQ]     = useState<QuestionDto | null>(null);
-  const [importOpen, setImport]   = useState(false);
-  const [importFile, setFile]     = useState<File | null>(null);
-  const [alert, setAlert]         = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+  const [status, setStatus] = useState('');
+  const [createOpen, setCreate] = useState(false);
+  const [editQ, setEditQ] = useState<QuestionDto | null>(null);
+  const [deleteQ, setDeleteQ] = useState<QuestionDto | null>(null);
+  const [importOpen, setImport] = useState(false);
+  const [importFile, setFile] = useState<File | null>(null);
+  const [alert, setAlert] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedSearch = useCallback(debounce((v: string) => { setSearch(v); setPage(0); }, 400), []);
+  const debouncedSearch = useCallback(
+    debounce((v: unknown) => {
+      setSearch(String(v));
+      setPage(0);
+    }, 400),
+    []
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-questions', page, search, difficulty, status],
@@ -217,7 +223,7 @@ export default function QuestionsPage() {
       explanation: d.explanation,
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-questions'] }); setCreate(false); setAlert({ type: 'success', msg: 'Question created.' }); },
-    onError:   () => setAlert({ type: 'error', msg: 'Failed to create question.' }),
+    onError: () => setAlert({ type: 'error', msg: 'Failed to create question.' }),
   });
 
   const updateMutation = useMutation({
@@ -230,13 +236,13 @@ export default function QuestionsPage() {
       explanation: d.explanation,
     }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-questions'] }); setEditQ(null); setAlert({ type: 'success', msg: 'Question updated.' }); },
-    onError:   () => setAlert({ type: 'error', msg: 'Failed to update question.' }),
+    onError: () => setAlert({ type: 'error', msg: 'Failed to update question.' }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: questionsApi.delete,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-questions'] }); setDeleteQ(null); setAlert({ type: 'success', msg: 'Question deleted.' }); },
-    onError:   () => setAlert({ type: 'error', msg: 'Failed to delete question.' }),
+    onError: () => setAlert({ type: 'error', msg: 'Failed to delete question.' }),
   });
 
   const importMutation = useMutation({
