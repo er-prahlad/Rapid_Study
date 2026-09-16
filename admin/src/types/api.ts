@@ -28,8 +28,11 @@ export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   tokenType: string;
-  expiresIn: number;
-  user: UserProfile;
+  userId: number;
+  name: string;
+  email: string;
+  role: 'STUDENT' | 'ADMIN' | 'SUPER_ADMIN';
+  language: 'EN' | 'HINDI' | 'ENGLISH';
 }
 
 export interface UserProfile {

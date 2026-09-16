@@ -26,20 +26,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = '/login';
   }, []);
 
-  // Validate existing token on mount
   useEffect(() => {
     const token = localStorage.getItem('admin_access_token');
+
     if (!token) {
       setIsLoading(false);
       return;
     }
+
     authApi
       .me()
       .then((res) => {
         const profile = res.data.data;
+
         if (profile.role !== 'ADMIN' && profile.role !== 'SUPER_ADMIN') {
           throw new Error('Not authorized');
         }
+
         setUser(profile);
       })
       .catch(() => {
@@ -51,19 +54,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await authApi.login({ email, password });
-    const { accessToken, refreshToken, user: profile } = res.data.data;
 
-    if (profile.role !== 'ADMIN' && profile.role !== 'SUPER_ADMIN') {
+    const {
+      accessToken,
+      refreshToken,
+      userId,
+      name,
+      email: userEmail,
+      role,
+      language,
+    } = res.data.data;
+
+    if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
       throw new Error('Access denied: Admin role required');
     }
 
+    const profile: UserProfile = {
+      id: userId,
+      name,
+      email: userEmail,
+      phone: null,
+      role,
+      isActive: true,
+      language: language === 'EN' ? 'ENGLISH' : 'HINDI',
+      createdAt: '',
+    };
+
     localStorage.setItem('admin_access_token', accessToken);
     localStorage.setItem('admin_refresh_token', refreshToken);
+
     setUser(profile);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isAuthenticated: !!user, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated: !!user,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -71,6 +103,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+
+  if (!ctx) {
+    throw new Error('useAuth must be used inside AuthProvider');
+  }
+
   return ctx;
 }

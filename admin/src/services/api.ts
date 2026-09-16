@@ -1,10 +1,24 @@
 import apiClient from './apiClient';
 import type {
-  ApiResponse, AdminDashboard, AdminUser, Page,
-  ExamDto, ExamRequest, SubjectDto, SubjectRequest, TopicDto, TopicRequest,
-  QuestionDto, QuestionRequest, ImportResultDto,
-  MockTestDto, MockTestRequest, AddQuestionsRequest,
-  AuthResponse, LoginRequest,
+  ApiResponse,
+  AdminDashboard,
+  AdminUser,
+  Page,
+  ExamDto,
+  ExamRequest,
+  SubjectDto,
+  SubjectRequest,
+  TopicDto,
+  TopicRequest,
+  QuestionDto,
+  QuestionRequest,
+  ImportResultDto,
+  MockTestDto,
+  MockTestRequest,
+  AddQuestionsRequest,
+  AuthResponse,
+  LoginRequest,
+  UserProfile,
 } from '@/types/api';
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -13,7 +27,7 @@ export const authApi = {
   login: (data: LoginRequest) =>
     apiClient.post<ApiResponse<AuthResponse>>('/auth/login', data),
   me: () =>
-    apiClient.get<ApiResponse<AuthResponse['user']>>('/auth/me'),
+  apiClient.get<ApiResponse<UserProfile>>('/auth/me'),
   logout: () =>
     apiClient.post('/auth/logout'),
 };
