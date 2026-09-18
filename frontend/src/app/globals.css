@@ -165,9 +165,9 @@ img {
 /* Reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
 
-  *,
-  *::before,
-  *::after {
+  *:not(.bubble),
+  *::before:not(.bubble),
+  *::after:not(.bubble) {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
@@ -188,8 +188,8 @@ img {
 .bubble {
   position: absolute;
   bottom: -150px;
-  background-color: rgba(99, 102, 241, 0.08);
-  /* indigo-500 with low opacity */
+  background-color: rgba(99, 102, 241, 0.20);
+  /* Increased opacity for visibility */
   border-radius: 50%;
   animation: floatUp 10s infinite ease-in;
 }
