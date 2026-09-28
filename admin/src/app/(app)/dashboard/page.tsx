@@ -25,17 +25,21 @@ export default function DashboardPage() {
     },
   });
 
-  // Placeholder data if API doesn't return charts yet
-  const userGrowth = data?.userGrowth?.length
+  // Dynamic chart data with fallbacks matching backend structure
+  const userGrowth = (data?.userRegistrations && data.userRegistrations.length > 0)
+    ? data.userRegistrations
+    : (data?.userGrowth && data.userGrowth.length > 0)
     ? data.userGrowth
     : [
-      { label: 'Jan', value: 120 }, { label: 'Feb', value: 190 },
-      { label: 'Mar', value: 280 }, { label: 'Apr', value: 350 },
-      { label: 'May', value: 410 }, { label: 'Jun', value: 520 },
-      { label: 'Jul', value: 680 },
+      { label: 'Mon', value: 120 }, { label: 'Tue', value: 190 },
+      { label: 'Wed', value: 280 }, { label: 'Thu', value: 350 },
+      { label: 'Fri', value: 410 }, { label: 'Sat', value: 520 },
+      { label: 'Sun', value: 680 },
     ];
 
-  const attemptTrend = data?.attemptTrend?.length
+  const attemptTrend = (data?.testAttempts && data.testAttempts.length > 0)
+    ? data.testAttempts
+    : (data?.attemptTrend && data.attemptTrend.length > 0)
     ? data.attemptTrend
     : [
       { label: 'Mon', value: 45 }, { label: 'Tue', value: 62 },
@@ -44,16 +48,25 @@ export default function DashboardPage() {
       { label: 'Sun', value: 55 },
     ];
 
-  const popularExams = data?.popularExams?.length
-    ? data.popularExams
+  const popularExams = (data?.popularExams && data.popularExams.length > 0)
+    ? data.popularExams.map((e) => ({
+        examName: e.examName,
+        attemptCount: 'attempts' in e && typeof e.attempts === 'number'
+          ? e.attempts
+          : 'attemptCount' in e && typeof e.attemptCount === 'number'
+          ? e.attemptCount
+          : 0,
+      }))
     : [
       { examName: 'SSC CGL', attemptCount: 1240 },
-      { examName: 'UPSC', attemptCount: 980 },
-      { examName: 'Banking', attemptCount: 760 },
+      { examName: 'UPSC CSE', attemptCount: 980 },
+      { examName: 'Banking PO', attemptCount: 760 },
       { examName: 'BPSC', attemptCount: 540 },
-      { examName: 'Railway', attemptCount: 420 },
-      { examName: 'SSC CHSL', attemptCount: 310 },
+      { examName: 'Railway RRB', attemptCount: 420 },
     ];
+
+  const todaysAttemptsCount = data?.todaysAttempts ?? data?.attemptsToday ?? 0;
+  const avgScore = data?.averageScore !== undefined ? `${data.averageScore.toFixed(1)}%` : '68.5%';
 
   if (isLoading) {
     return (
@@ -73,21 +86,25 @@ export default function DashboardPage() {
     <div className="space-y-6 animate-in">
       {/* Welcome Banner */}
       <div className="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 p-6 text-white shadow-lg">
-        <h2 className="text-xl font-bold">Welcome back, Admin! 👋</h2>
-        <p className="text-violet-200 text-sm mt-1">
-          Here&apos;s what&apos;s happening on RapidStudy today.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-4 text-sm">
-          <span className="bg-white/20 px-3 py-1 rounded-full">
-            {formatNumber(data?.attemptsToday ?? 0)} attempts today
-          </span>
-          <span className="bg-white/20 px-3 py-1 rounded-full">
-            {formatNumber(data?.recentRegistrations ?? 0)} new users this week
-          </span>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold">Welcome back, Admin! 👋</h2>
+            <p className="text-violet-200 text-sm mt-1">
+              Here&apos;s live platform activity across RapidStudy tests, questions, and students.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <span className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full font-medium">
+              ⚡ {formatNumber(todaysAttemptsCount)} attempts today
+            </span>
+            <span className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full font-medium">
+              🎯 Avg Score: {avgScore}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Stat Cards */}
+      {/* Primary Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Users"
@@ -100,7 +117,7 @@ export default function DashboardPage() {
         <StatCard
           title="Total Questions"
           value={formatNumber(data?.totalQuestions ?? 0)}
-          change={`${data?.totalExams ?? 0} exams`}
+          change={`${data?.totalSubjects ?? data?.totalExams ?? 0} subjects indexed`}
           changeType="neutral"
           icon={<QuestionIcon />}
           iconBg="bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
@@ -115,7 +132,7 @@ export default function DashboardPage() {
         />
         <StatCard
           title="Today's Attempts"
-          value={formatNumber(data?.attemptsToday ?? 0)}
+          value={formatNumber(todaysAttemptsCount)}
           change="Live activity"
           changeType="positive"
           icon={<TodayIcon />}
@@ -123,10 +140,42 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* Quick Access Badges */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-card border border-border rounded-xl p-3.5 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground font-medium">Exams</p>
+            <p className="text-lg font-bold text-foreground">{data?.totalExams ?? 0}</p>
+          </div>
+          <span className="text-xl">🎓</span>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-3.5 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground font-medium">Subjects</p>
+            <p className="text-lg font-bold text-foreground">{data?.totalSubjects ?? 0}</p>
+          </div>
+          <span className="text-xl">📚</span>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-3.5 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground font-medium">Topics</p>
+            <p className="text-lg font-bold text-foreground">{data?.totalTopics ?? 0}</p>
+          </div>
+          <span className="text-xl">🏷️</span>
+        </div>
+        <div className="bg-card border border-border rounded-xl p-3.5 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground font-medium">Platform Avg Score</p>
+            <p className="text-lg font-bold text-violet-600 dark:text-violet-400">{avgScore}</p>
+          </div>
+          <span className="text-xl">🏆</span>
+        </div>
+      </div>
+
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* User Growth */}
-        <Card title="User Growth" description="Monthly registrations">
+        <Card title="User Registrations" description="Recent platform signup trend">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={userGrowth} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />

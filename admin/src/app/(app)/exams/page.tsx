@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -190,14 +191,19 @@ export default function ExamsPage() {
 
                 <p className="text-xs text-muted-foreground">Created {formatDate(exam.createdAt)}</p>
 
-                <div className="flex gap-2 pt-1 border-t border-border">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => openEdit(exam)}>
+                <div className="flex flex-wrap gap-2 pt-1 border-t border-border">
+                  <Link href="/subjects" className="flex-1 min-w-[90px]">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Subjects
+                    </Button>
+                  </Link>
+                  <Button variant="outline" size="sm" className="flex-1 min-w-[70px]" onClick={() => openEdit(exam)}>
                     Edit
                   </Button>
                   <Button
                     variant={exam.isActive ? 'secondary' : 'primary'}
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 min-w-[90px]"
                     loading={toggleMutation.isPending}
                     onClick={() => toggleMutation.mutate({ id: exam.id, active: exam.isActive })}
                   >

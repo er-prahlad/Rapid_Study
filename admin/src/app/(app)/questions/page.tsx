@@ -33,7 +33,7 @@ function QuestionFormModal({ open, onClose, initial, onSave, loading }: {
   onSave: (data: QForm) => void;
   loading: boolean;
 }) {
-  const { register, control, handleSubmit, reset, watch, formState: { errors } } = useForm<QForm>({
+  const { register, control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<QForm>({
     resolver: zodResolver(qSchema),
     defaultValues: {
       questionText: initial?.questionText ?? '',
@@ -43,7 +43,7 @@ function QuestionFormModal({ open, onClose, initial, onSave, loading }: {
       options: initial?.options?.length
         ? initial.options.map(o => ({ optionText: o.optionText, isCorrect: o.isCorrect }))
         : [
-          { optionText: '', isCorrect: false },
+          { optionText: '', isCorrect: true },
           { optionText: '', isCorrect: false },
           { optionText: '', isCorrect: false },
           { optionText: '', isCorrect: false },
@@ -99,7 +99,7 @@ function QuestionFormModal({ open, onClose, initial, onSave, loading }: {
             id="q-topic-id"
             type="number"
             {...register('topicId')}
-            placeholder="e.g. 12"
+            placeholder="e.g. 1"
             error={errors.topicId?.message}
           />
         </div>
@@ -115,21 +115,15 @@ function QuestionFormModal({ open, onClose, initial, onSave, loading }: {
               <input
                 type="radio"
                 name="correct-option"
-                checked={options[i]?.isCorrect}
+                checked={options?.[i]?.isCorrect ?? false}
                 onChange={() => {
                   fields.forEach((_, j) => {
-                    const el = document.getElementById(`opt-correct-${j}`) as HTMLInputElement;
-                    if (el) el.value = j === i ? 'true' : 'false';
+                    setValue(`options.${j}.isCorrect`, j === i, { shouldValidate: true, shouldDirty: true });
                   });
                 }}
-                className="shrink-0 text-primary"
+                className="w-4 h-4 shrink-0 text-primary cursor-pointer"
                 title="Mark as correct"
                 id={`opt-radio-${i}`}
-              />
-              <input
-                id={`opt-correct-${i}`}
-                type="hidden"
-                {...register(`options.${i}.isCorrect`)}
               />
               <input
                 id={`opt-text-${i}`}
@@ -141,7 +135,7 @@ function QuestionFormModal({ open, onClose, initial, onSave, loading }: {
                 <button
                   type="button"
                   onClick={() => remove(i)}
-                  className="text-muted-foreground hover:text-destructive transition-colors"
+                  className="text-muted-foreground hover:text-destructive transition-colors p-1"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -186,6 +180,7 @@ export default function QuestionsPage() {
   const [difficulty, setDifficulty] = useState('');
   const [status, setStatus] = useState('');
   const [createOpen, setCreate] = useState(false);
+  const [viewQ, setViewQ] = useState<QuestionDto | null>(null);
   const [editQ, setEditQ] = useState<QuestionDto | null>(null);
   const [deleteQ, setDeleteQ] = useState<QuestionDto | null>(null);
   const [importOpen, setImport] = useState(false);
@@ -347,6 +342,12 @@ export default function QuestionsPage() {
                     <td className="text-muted-foreground">{formatDate(q.createdAt)}</td>
                     <td>
                       <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => setViewQ(q)} title="View Question">
+                          <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => setEditQ(q)} title="Edit">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -369,6 +370,66 @@ export default function QuestionsPage() {
           <Pagination page={page} totalPages={data.totalPages} totalElements={data.totalElements} size={20} onChange={setPage} />
         )}
       </div>
+
+      {/* View Question Modal */}
+      <Modal
+        open={!!viewQ}
+        onClose={() => setViewQ(null)}
+        title="Question Details"
+        size="lg"
+        footer={<Button onClick={() => setViewQ(null)}>Close</Button>}
+      >
+        {viewQ && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2 items-center justify-between pb-3 border-b border-border">
+              <div className="flex gap-2">
+                <Badge variant={diffBadge[viewQ.difficulty] ?? 'default'}>{viewQ.difficulty}</Badge>
+                <Badge variant={viewQ.isActive ? 'success' : 'default'} dot>
+                  {viewQ.status ?? (viewQ.isActive ? 'Active' : 'Inactive')}
+                </Badge>
+              </div>
+              <span className="text-xs text-muted-foreground font-mono">ID #{viewQ.id} • Topic #{viewQ.topicId}</span>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Question</p>
+              <p className="text-base text-foreground font-medium whitespace-pre-wrap">{viewQ.questionText}</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Options</p>
+              <div className="space-y-2">
+                {viewQ.options?.map((opt, i) => (
+                  <div
+                    key={opt.id ?? i}
+                    className={`p-3 rounded-lg border text-sm flex items-center justify-between ${
+                      opt.isCorrect
+                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 font-medium'
+                        : 'bg-muted/40 border-border text-foreground'
+                    }`}
+                  >
+                    <span>
+                      <strong className="mr-2">{String.fromCharCode(65 + i)}.</strong> {opt.optionText}
+                    </span>
+                    {opt.isCorrect && (
+                      <span className="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold">
+                        ✓ Correct Answer
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {viewQ.explanation && (
+              <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Explanation</p>
+                <p className="text-xs text-foreground whitespace-pre-wrap">{viewQ.explanation}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
 
       {/* Create / Edit */}
       <QuestionFormModal
@@ -444,6 +505,27 @@ export default function QuestionsPage() {
               {importFile ? importFile.name : 'Choose File'}
             </Button>
           </div>
+
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Need a sample file?</span>
+            <button
+              type="button"
+              className="text-primary hover:underline font-medium"
+              onClick={() => {
+                const sampleCsv = 'questionText,option1,option2,option3,option4,correctOption,difficulty,topicId,explanation\n"What is the capital of India?","Mumbai","New Delhi","Kolkata","Chennai",2,EASY,1,"New Delhi is the official capital of India."\n';
+                const blob = new Blob([sampleCsv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'sample_questions.csv';
+                a.click();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              📥 Download Sample CSV
+            </button>
+          </div>
+
           <p className="text-xs text-muted-foreground">
             Columns: <code className="bg-muted px-1 py-0.5 rounded">questionText, option1, option2, option3, option4, correctOption (1-4), difficulty, topicId</code>
           </p>

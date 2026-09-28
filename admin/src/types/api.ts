@@ -55,12 +55,18 @@ export interface AdminDashboard {
   totalQuestions: number;
   totalTests: number;
   totalAttempts: number;
-  attemptsToday: number;
-  recentRegistrations: number;
-  userGrowth: ChartPoint[];
-  attemptTrend: ChartPoint[];
-  popularExams: PopularExam[];
-  topPerformers: TopPerformer[];
+  todaysAttempts?: number;
+  attemptsToday?: number;
+  recentRegistrations?: number;
+  totalSubjects?: number;
+  totalTopics?: number;
+  averageScore?: number;
+  userGrowth?: ChartPoint[];
+  userRegistrations?: ChartPoint[];
+  attemptTrend?: ChartPoint[];
+  testAttempts?: ChartPoint[];
+  popularExams?: (PopularExam | { examId: number; examName: string; attempts: number })[];
+  topPerformers?: TopPerformer[];
 }
 
 export interface ChartPoint {
@@ -69,8 +75,10 @@ export interface ChartPoint {
 }
 
 export interface PopularExam {
+  examId?: number;
   examName: string;
-  attemptCount: number;
+  attempts?: number;
+  attemptCount?: number;
 }
 
 export interface TopPerformer {
@@ -102,9 +110,11 @@ export interface ExamDto {
   code: string;
   description: string | null;
   isActive: boolean;
-  subjectCount: number;
-  topicCount: number;
-  questionCount: number;
+  subjectCount?: number;
+  topicCount?: number;
+  questionCount?: number;
+  totalSubjects?: number;
+  totalTests?: number;
   createdAt: string;
 }
 
@@ -118,26 +128,35 @@ export interface SubjectDto {
   id: number;
   name: string;
   examId: number;
-  examName: string;
-  topicCount: number;
+  examName?: string;
+  description?: string;
+  displayOrder?: number;
+  topicCount?: number;
+  topics?: TopicDto[];
 }
 
 export interface SubjectRequest {
   name: string;
   examId: number;
+  description?: string;
+  displayOrder?: number;
 }
 
 export interface TopicDto {
   id: number;
   name: string;
   subjectId: number;
-  subjectName: string;
-  questionCount: number;
+  subjectName?: string;
+  description?: string;
+  displayOrder?: number;
+  questionCount?: number;
 }
 
 export interface TopicRequest {
   name: string;
   subjectId: number;
+  description?: string;
+  displayOrder?: number;
 }
 
 // ─── Question ─────────────────────────────────────────────────────────────────

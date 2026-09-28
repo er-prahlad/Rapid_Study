@@ -202,7 +202,7 @@ export function Card({ children, className, title, description, action }: CardPr
 
 // ─── Badge ────────────────────────────────────────────────────────────────────
 
-type BadgeVariant = 'default' | 'success' | 'warning' | 'destructive' | 'info' | 'purple';
+type BadgeVariant = 'default' | 'success' | 'warning' | 'destructive' | 'info' | 'purple' | 'primary';
 
 interface BadgeProps {
   children: React.ReactNode;
@@ -218,6 +218,7 @@ const dotColors: Record<BadgeVariant, string> = {
   destructive: 'bg-red-500',
   info:        'bg-blue-500',
   purple:      'bg-violet-500',
+  primary:     'bg-primary',
 };
 
 export function Badge({ children, variant = 'default', className, dot }: BadgeProps) {

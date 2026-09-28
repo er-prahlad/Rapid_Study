@@ -67,6 +67,10 @@ export const examsApi = {
     apiClient.patch<ApiResponse<void>>(`/admin/exams/${id}/activate`),
   deactivate: (id: number) =>
     apiClient.patch<ApiResponse<void>>(`/admin/exams/${id}/deactivate`),
+  getSubjects: (examId: number) =>
+    apiClient.get<ApiResponse<SubjectDto[]>>(`/exams/${examId}/subjects`),
+  getDetail: (id: number) =>
+    apiClient.get<ApiResponse<ExamDto & { subjects: SubjectDto[] }>>(`/exams/${id}`),
 };
 
 // ─── Subjects ─────────────────────────────────────────────────────────────────
@@ -149,3 +153,21 @@ export const testsApi = {
   getQuestions: (id: number) =>
     apiClient.get<ApiResponse<QuestionDto[]>>(`/admin/tests/${id}/questions`),
 };
+
+// ─── AI Generation ────────────────────────────────────────────────────────────
+
+export const aiApi = {
+  generateQuestions: (data: {
+    topicId?: number;
+    examName?: string;
+    subjectName?: string;
+    topicName?: string;
+    difficulty?: string;
+    language?: string;
+    count?: number;
+  }) =>
+    apiClient.post<ApiResponse<Record<string, unknown>>>('/ai/generate-questions', data),
+  status: () =>
+    apiClient.get<ApiResponse<{ available: boolean }>>('/ai/status'),
+};
+

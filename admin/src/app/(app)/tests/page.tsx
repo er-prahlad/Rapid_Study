@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { testsApi } from '@/services/api';
 import { Button, Badge, Skeleton, EmptyState, Modal, Alert, Input, Select, Pagination, Checkbox } from '@/components/ui';
 import { formatDate, formatNumber, debounce } from '@/lib/utils';
-import type { MockTestDto } from '@/types/api';
+import type { MockTestDto, AddQuestionsRequest } from '@/types/api';
 
 const testSchema = z.object({
   title: z.string().min(3, 'Title is required'),
@@ -102,6 +102,14 @@ export default function TestsPage() {
   const [viewTest, setView] = useState<MockTestDto | null>(null);
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
 
+  // Question builder states
+  const [addMode, setAddMode] = useState(false);
+  const [addTopicId, setAddTopicId] = useState('');
+  const [addDifficulty, setAddDifficulty] = useState('');
+  const [addCount, setAddCount] = useState('5');
+  const [addQIds, setAddQIds] = useState('');
+  const [removingQId, setRemovingQId] = useState<number | null>(null);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSearch = useCallback(
     debounce((v: unknown) => {
@@ -160,6 +168,39 @@ export default function TestsPage() {
     mutationFn: ({ id, pub }: { id: number; pub: boolean }) => pub ? testsApi.unpublish(id) : testsApi.publish(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin-tests'] }); setAlert({ type: 'success', msg: 'Test status updated.' }); },
     onError: () => setAlert({ type: 'error', msg: 'Failed to update test status.' }),
+  });
+
+  const removeQMutation = useMutation({
+    mutationFn: ({ testId, qId }: { testId: number; qId: number }) =>
+      testsApi.removeQuestion(testId, qId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-test-questions', viewTest?.id] });
+      qc.invalidateQueries({ queryKey: ['admin-tests'] });
+      setRemovingQId(null);
+      setAlert({ type: 'success', msg: 'Question removed from test.' });
+    },
+    onError: () => {
+      setRemovingQId(null);
+      setAlert({ type: 'error', msg: 'Failed to remove question.' });
+    },
+  });
+
+  const addQMutation = useMutation({
+    mutationFn: ({ testId, req }: { testId: number; req: AddQuestionsRequest }) =>
+      testsApi.addQuestions(testId, req),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin-test-questions', viewTest?.id] });
+      qc.invalidateQueries({ queryKey: ['admin-tests'] });
+      setAddMode(false);
+      setAddQIds('');
+      setAlert({ type: 'success', msg: 'Questions added to test successfully.' });
+    },
+    onError: (e: unknown) => {
+      setAlert({
+        type: 'error',
+        msg: (e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to add questions.',
+      });
+    },
   });
 
   return (
@@ -303,38 +344,160 @@ export default function TestsPage() {
         </p>
       </Modal>
 
-      {/* View Questions Modal */}
+      {/* View & Manage Questions Modal */}
       <Modal
         open={!!viewTest}
-        onClose={() => setView(null)}
+        onClose={() => { setView(null); setAddMode(false); }}
         title={`Questions — ${viewTest?.title}`}
-        description={`${viewTest?.questionCount} questions`}
+        description={`${testQsData?.length ?? viewTest?.questionCount ?? 0} questions currently in this test`}
         size="xl"
+        footer={
+          <div className="flex justify-between items-center w-full">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAddMode(!addMode)}
+            >
+              {addMode ? '← Back to Questions' : '+ Add Questions to Test'}
+            </Button>
+            <Button onClick={() => { setView(null); setAddMode(false); }}>Done</Button>
+          </div>
+        }
       >
-        <div className="space-y-2 max-h-[50vh] overflow-y-auto">
-          {testQsData?.map((q, i) => (
-            <div key={q.id} className="flex gap-3 p-3 rounded-lg bg-muted/30 border border-border">
-              <span className="text-xs text-muted-foreground w-6 shrink-0">{i + 1}.</span>
-              <div className="min-w-0">
-                <p className="text-sm text-foreground">{q.questionText}</p>
-                <div className="flex gap-2 mt-1.5 flex-wrap">
-                  {q.options?.map(o => (
-                    <span
-                      key={o.id}
-                      className={`text-xs px-2 py-0.5 rounded-full border ${o.isCorrect ? 'bg-emerald-100 border-emerald-300 text-emerald-700 font-medium' : 'bg-muted border-border text-muted-foreground'}`}
-                    >
-                      {o.optionText}
-                    </span>
-                  ))}
-                </div>
-              </div>
+        {addMode ? (
+          <div className="p-4 bg-muted/40 rounded-xl border border-border space-y-4">
+            <h4 className="font-semibold text-sm text-foreground">Add Questions to Test</h4>
+            <p className="text-xs text-muted-foreground">
+              Select method to add questions to this test. You can add questions by topic/difficulty or by specific question IDs.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Input
+                label="Topic ID (optional)"
+                id="add-q-topic"
+                type="number"
+                placeholder="e.g. 1"
+                value={addTopicId}
+                onChange={(e) => setAddTopicId(e.target.value)}
+              />
+              <Select
+                label="Difficulty"
+                id="add-q-diff"
+                options={[
+                  { value: '', label: 'Any Difficulty' },
+                  { value: 'EASY', label: 'Easy' },
+                  { value: 'MEDIUM', label: 'Medium' },
+                  { value: 'HARD', label: 'Hard' },
+                ]}
+                value={addDifficulty}
+                onChange={(e) => setAddDifficulty(e.target.value)}
+              />
+              <Input
+                label="Number of Questions"
+                id="add-q-count"
+                type="number"
+                min="1"
+                max="100"
+                placeholder="e.g. 10"
+                value={addCount}
+                onChange={(e) => setAddCount(e.target.value)}
+              />
             </div>
-          )) ?? (
-              <div className="text-center py-8 text-muted-foreground text-sm">
-                No questions added yet.
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="add-q-ids" className="text-sm font-medium">Or Specific Question IDs (comma-separated)</label>
+              <input
+                id="add-q-ids"
+                type="text"
+                placeholder="e.g. 101, 102, 103"
+                value={addQIds}
+                onChange={(e) => setAddQIds(e.target.value)}
+                className="h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="ghost" size="sm" onClick={() => setAddMode(false)}>
+                Cancel
+              </Button>
+              <Button
+                id="confirm-add-questions-btn"
+                size="sm"
+                loading={addQMutation.isPending}
+                onClick={() => {
+                  if (!viewTest) return;
+                  const ids = addQIds.trim()
+                    ? addQIds.split(',').map((x) => Number(x.trim())).filter((n) => !isNaN(n) && n > 0)
+                    : undefined;
+
+                  addQMutation.mutate({
+                    testId: viewTest.id,
+                    req: {
+                      questionIds: ids && ids.length > 0 ? ids : undefined,
+                      topicId: addTopicId ? Number(addTopicId) : undefined,
+                      difficulty: addDifficulty || undefined,
+                      randomCount: addCount ? Number(addCount) : 5,
+                    },
+                  });
+                }}
+              >
+                Add Questions
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+            {testQsData && testQsData.length > 0 ? (
+              testQsData.map((q, i) => (
+                <div key={q.id} className="flex items-start justify-between gap-3 p-3 rounded-lg bg-card border border-border">
+                  <div className="flex gap-3 min-w-0 flex-1">
+                    <span className="text-xs font-bold text-muted-foreground w-6 shrink-0 mt-0.5">{i + 1}.</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-foreground font-medium">{q.questionText}</p>
+                      <div className="flex gap-1.5 mt-2 flex-wrap">
+                        {q.options?.map((o) => (
+                          <span
+                            key={o.id}
+                            className={`text-xs px-2 py-0.5 rounded-full border ${
+                              o.isCorrect
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 font-semibold'
+                                : 'bg-muted/40 border-border text-muted-foreground'
+                            }`}
+                          >
+                            {o.isCorrect ? '✓ ' : ''}{o.optionText}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-destructive shrink-0"
+                    title="Remove from test"
+                    loading={removeQMutation.isPending && removingQId === q.id}
+                    onClick={() => {
+                      if (viewTest) {
+                        setRemovingQId(q.id);
+                        removeQMutation.mutate({ testId: viewTest.id, qId: q.id });
+                      }
+                    }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-10 space-y-3">
+                <p className="text-sm text-muted-foreground">No questions in this test yet.</p>
+                <Button size="sm" onClick={() => setAddMode(true)}>+ Add First Question</Button>
               </div>
             )}
-        </div>
+          </div>
+        )}
       </Modal>
     </div>
   );

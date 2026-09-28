@@ -153,4 +153,7 @@
   .badge-purple {
     @apply bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-400;
   }
+  .badge-primary {
+    @apply bg-primary/15 text-primary dark:bg-primary/25 dark:text-primary font-medium;
+  }
 }
