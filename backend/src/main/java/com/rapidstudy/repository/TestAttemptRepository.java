@@ -23,6 +23,14 @@ public interface TestAttemptRepository extends JpaRepository<TestAttempt, Long> 
 
     List<TestAttempt> findByMockTestId(Long mockTestId);
 
+    List<TestAttempt> findByMockTestIdAndStatus(Long mockTestId, AttemptStatus status);
+
+    List<TestAttempt> findByUserId(Long userId);
+
+    List<TestAttempt> findByUserIdAndMockTestId(Long userId, Long mockTestId);
+
+    Optional<TestAttempt> findFirstByUserIdAndMockTestIdAndStatus(Long userId, Long mockTestId, AttemptStatus status);
+
     long countByUserId(Long userId);
 
     long countByUserIdAndStatus(Long userId, AttemptStatus status);

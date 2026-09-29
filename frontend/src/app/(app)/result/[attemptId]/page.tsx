@@ -18,6 +18,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from "recharts";
 import { useState } from "react";
+import { TestLeaderboardModal } from "@/components/TestLeaderboardModal";
 
 // ── Stat card ─────────────────────────────────────────────────────────────────
 
@@ -63,6 +64,11 @@ function QuestionReview({ q, index }: { q: QuestionResultDto; index: number }) {
         </span>
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium line-clamp-2">{q.questionText}</p>
+          {q.questionTextHindi && (
+            <p className="text-xs text-muted-foreground font-devanagari mt-0.5 line-clamp-1">
+              {q.questionTextHindi}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className={cn("text-sm font-bold", statusConfig.color)}>{statusConfig.label}</span>
@@ -97,9 +103,16 @@ function QuestionReview({ q, index }: { q: QuestionResultDto; index: number }) {
                   )}>
                     {opt.optionOrder}
                   </span>
-                  <span className="flex-1">{opt.optionText}</span>
-                  {isCorrect  && <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />}
-                  {isSelected && !isCorrect && <XCircle className="h-4 w-4 text-red-500 shrink-0" />}
+                  <div className="flex-1">
+                    <p>{opt.optionText}</p>
+                    {opt.optionTextHindi && (
+                      <p className="text-xs text-muted-foreground font-devanagari mt-0.5">
+                        {opt.optionTextHindi}
+                      </p>
+                    )}
+                  </div>
+                  {isCorrect  && <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />}
+                  {isSelected && !isCorrect && <XCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />}
                 </div>
               );
             })}
@@ -118,10 +131,15 @@ function QuestionReview({ q, index }: { q: QuestionResultDto; index: number }) {
           </div>
 
           {/* Explanation */}
-          {q.explanation && (
-            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm">
-              <p className="font-medium text-blue-800 mb-1">Explanation</p>
-              <p className="text-blue-700">{q.explanation}</p>
+          {(q.explanation || q.explanationHindi) && (
+            <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm space-y-1">
+              <p className="font-medium text-blue-800">Explanation</p>
+              {q.explanation && <p className="text-blue-700">{q.explanation}</p>}
+              {q.explanationHindi && (
+                <p className="text-blue-700 font-devanagari pt-1 border-t border-blue-200/60">
+                  {q.explanationHindi}
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -134,6 +152,7 @@ function QuestionReview({ q, index }: { q: QuestionResultDto; index: number }) {
 
 export default function ResultPage({ params }: { params: { attemptId: string } }) {
   const attemptId = parseInt(params.attemptId, 10);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["result", attemptId],
@@ -219,8 +238,17 @@ export default function ResultPage({ params }: { params: { attemptId: string } }
               <p className="text-blue-200 text-sm">Percentage</p>
             </div>
           </div>
-          <div className="mt-4">
-            <Progress value={result.percentage} className="h-2 bg-white/30 [&>div]:bg-white" />
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <Progress value={result.percentage} className="h-2 bg-white/30 [&>div]:bg-white flex-1" />
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setShowLeaderboard(true)}
+              className="bg-white/20 hover:bg-white/30 text-white border-0 gap-1.5 shrink-0"
+            >
+              <Trophy className="h-4 w-4 text-amber-300" />
+              Leaderboard &amp; Percentile
+            </Button>
           </div>
         </div>
       </div>
@@ -318,6 +346,9 @@ export default function ResultPage({ params }: { params: { attemptId: string } }
         <Button variant="outline" asChild className="flex-1">
           <Link href="/tests"><ArrowLeft className="h-4 w-4 mr-2" />All Tests</Link>
         </Button>
+        <Button variant="outline" onClick={() => setShowLeaderboard(true)} className="flex-1 gap-1.5">
+          <Trophy className="h-4 w-4 text-amber-500" />Leaderboard
+        </Button>
         <Button variant="outline" asChild className="flex-1">
           <Link href={`/analysis/${attemptId}`}><BarChart2 className="h-4 w-4 mr-2" />Full Analysis</Link>
         </Button>
@@ -325,6 +356,16 @@ export default function ResultPage({ params }: { params: { attemptId: string } }
           <Link href="/dashboard">Dashboard</Link>
         </Button>
       </div>
+
+      {/* Test Leaderboard Modal */}
+      {result.mockTestId && (
+        <TestLeaderboardModal
+          testId={result.mockTestId}
+          testTitle={result.testTitle}
+          open={showLeaderboard}
+          onOpenChange={setShowLeaderboard}
+        />
+      )}
     </div>
   );
 }

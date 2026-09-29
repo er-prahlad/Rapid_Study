@@ -3,6 +3,7 @@ package com.rapidstudy.service;
 import com.rapidstudy.dto.question.*;
 import com.rapidstudy.entity.Option;
 import com.rapidstudy.entity.Question;
+import com.rapidstudy.entity.Topic;
 import com.rapidstudy.enums.Difficulty;
 import com.rapidstudy.enums.QuestionType;
 import com.rapidstudy.exception.BadRequestException;
@@ -424,10 +425,18 @@ public class QuestionService {
                 .isCorrect(null) // NEVER include correct answer for students
                 .build()).collect(Collectors.toList());
 
-        String topicName = q.getTopic() != null ? q.getTopic().getName() : null;
+        Topic topic = q.getTopic();
+        if (topic == null && q.getTopicId() != null) {
+            topic = topicRepository.findById(q.getTopicId()).orElse(null);
+        }
+        String topicName = topic != null ? topic.getName() : null;
+        Long subjectId = topic != null ? topic.getSubjectId() : null;
+        String subjectName = (topic != null && topic.getSubject() != null) ? topic.getSubject().getName() : null;
 
         return QuestionSafeDto.builder()
                 .id(q.getId()).topicId(q.getTopicId()).topicName(topicName)
+                .subjectId(subjectId).subjectName(subjectName)
+                .sectionName(subjectName != null ? subjectName : (topicName != null ? topicName : "General"))
                 .questionText(q.getQuestionText()).questionTextHindi(q.getQuestionTextHindi())
                 .questionType(q.getQuestionType()).difficulty(q.getDifficulty())
                 .marks(q.getMarks()).negativeMarks(q.getNegativeMarks())

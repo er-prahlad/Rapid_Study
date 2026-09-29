@@ -41,6 +41,20 @@ public final class SecurityUtil {
     }
 
     /**
+     * Returns the user ID if authenticated, or null if anonymous.
+     */
+    public static Long optionalUserId() {
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()
+                    && (auth.getPrincipal() instanceof AuthenticatedUserPrincipal principal)) {
+                return principal.getUserId();
+            }
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    /**
      * Returns true if the current user has the ADMIN role.
      */
     public static boolean isAdmin() {

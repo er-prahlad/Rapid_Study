@@ -1,8 +1,9 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { attemptApi, QuestionState, QuestionStateDto } from "@/services/attemptApi";import type { QuestionSafeDto, OptionDto } from "@/services/mockTestApi";
+import { attemptApi, QuestionState, QuestionStateDto } from "@/services/attemptApi";
+import type { QuestionSafeDto, OptionDto } from "@/services/mockTestApi";
 import { useServerTimer } from "@/hooks/use-server-timer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   ChevronLeft, ChevronRight, Clock, AlertTriangle,
-  CheckCircle2, Flag, X, Send,
+  CheckCircle2, Flag, X, Send, Globe, Layers, BookOpen
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -54,6 +55,9 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
   const attemptId = parseInt(params.attemptId, 10);
   const router    = useRouter();
   const qc        = useQueryClient();
+
+  // ── Language Toggle: English / Hindi ──────────────────────────────
+  const [language, setLanguage] = useState<"EN" | "HI">("EN");
 
   // ── Fetch attempt status on mount (restores state after refresh) ──
   const { data: statusData, isLoading: statusLoading } = useQuery({
@@ -101,6 +105,21 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
   useEffect(() => {
     if (questionsData?.data) setQuestions(questionsData.data);
   }, [questionsData]);
+
+  // ── Section Grouping ──────────────────────────────────────────────
+  const sections = useMemo(() => {
+    const map = new Map<string, number[]>();
+    questions.forEach((q, idx) => {
+      const name = q.sectionName?.trim() || q.subjectName?.trim() || "General";
+      if (!map.has(name)) map.set(name, []);
+      map.get(name)!.push(idx);
+    });
+    return Array.from(map.entries()).map(([name, indices]) => ({
+      name,
+      indices,
+      count: indices.length,
+    }));
+  }, [questions]);
 
   // ── Phase 24: Server-authoritative timer ──────────────────────────
   const { formatted, isWarning, isCritical } = useServerTimer(
@@ -229,6 +248,7 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
   }
 
   const curState = currentQId ? getState(currentQId) : null;
+  const currentSection = currentQuestion?.sectionName?.trim() || currentQuestion?.subjectName?.trim() || "General";
 
   // ── Render ────────────────────────────────────────────────────────
 
@@ -239,14 +259,43 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
       <header className="h-14 border-b bg-background flex items-center gap-4 px-4 shrink-0">
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm truncate">{attempt.testTitle}</p>
-          <p className="text-xs text-muted-foreground">
-            Q {currentIndex + 1} of {questions.length}
-          </p>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>Q {currentIndex + 1} of {questions.length}</span>
+            <span>•</span>
+            <span className="font-medium text-primary">{currentSection}</span>
+          </div>
+        </div>
+
+        {/* 🌐 Dual Language Switcher */}
+        <div className="flex items-center gap-1 bg-muted/70 p-1 rounded-lg border text-xs">
+          <span className="text-muted-foreground pl-1.5 hidden sm:inline-flex items-center gap-1">
+            <Globe className="h-3 w-3" /> Lang:
+          </span>
+          <button
+            type="button"
+            onClick={() => setLanguage("EN")}
+            className={cn(
+              "px-2.5 py-1 rounded font-medium transition-all text-xs",
+              language === "EN" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            English
+          </button>
+          <button
+            type="button"
+            onClick={() => setLanguage("HI")}
+            className={cn(
+              "px-2.5 py-1 rounded font-medium transition-all text-xs font-devanagari",
+              language === "HI" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            हिंदी
+          </button>
         </div>
 
         {/* Phase 24: Server timer (display only) */}
         <div className={cn(
-          "flex items-center gap-1.5 font-mono font-bold text-base px-3 py-1.5 rounded-lg",
+          "flex items-center gap-1.5 font-mono font-bold text-sm sm:text-base px-3 py-1.5 rounded-lg",
           isCritical ? "bg-red-100 text-red-700 animate-pulse" :
           isWarning  ? "bg-orange-100 text-orange-700" :
                        "bg-muted text-foreground"
@@ -260,6 +309,42 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
           Submit
         </Button>
       </header>
+
+      {/* 📑 Section Tabs Bar */}
+      {sections.length > 1 && (
+        <div className="flex items-center gap-2 overflow-x-auto border-b bg-muted/30 px-4 py-2 shrink-0">
+          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1 shrink-0">
+            <Layers className="h-3.5 w-3.5" /> Sections:
+          </span>
+          {sections.map(sec => {
+            const isCurrent = sec.indices.includes(currentIndex);
+            const answeredCount = sec.indices.filter(
+              i => questions[i] && localState[questions[i].id]?.selectedOptionId !== null
+            ).length;
+            return (
+              <button
+                key={sec.name}
+                type="button"
+                onClick={() => setCurrentIndex(sec.indices[0])}
+                className={cn(
+                  "px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 shrink-0 border",
+                  isCurrent
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-background hover:bg-muted text-foreground border-border"
+                )}
+              >
+                <span>{sec.name}</span>
+                <span className={cn(
+                  "text-[10px] px-1.5 py-0.2 rounded-full",
+                  isCurrent ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+                )}>
+                  {answeredCount}/{sec.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* ── Body ── */}
       <div className="flex-1 flex overflow-hidden">
@@ -280,7 +365,10 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
                 </span>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <Badge variant="outline" className="text-xs capitalize">
+                    <Badge variant="outline" className="text-xs">
+                      {currentSection}
+                    </Badge>
+                    <Badge variant="secondary" className="text-xs capitalize">
                       {currentQuestion.difficulty?.toLowerCase()}
                     </Badge>
                     <Badge variant="secondary" className="text-xs">
@@ -297,13 +385,32 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
                       </Badge>
                     )}
                   </div>
-                  <p className="text-base font-medium leading-relaxed">
-                    {currentQuestion.questionText}
-                  </p>
-                  {currentQuestion.questionTextHindi && (
-                    <p className="text-sm text-muted-foreground mt-1 font-devanagari">
-                      {currentQuestion.questionTextHindi}
-                    </p>
+
+                  {/* Bilingual Question text rendering */}
+                  {language === "HI" && currentQuestion.questionTextHindi ? (
+                    <div>
+                      <p className="text-base font-medium leading-relaxed font-devanagari">
+                        {currentQuestion.questionTextHindi}
+                      </p>
+                      {currentQuestion.questionText && (
+                        <p className="text-xs text-muted-foreground mt-1.5 border-t pt-1.5">
+                          <span className="font-semibold mr-1">English:</span>
+                          {currentQuestion.questionText}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-base font-medium leading-relaxed">
+                        {currentQuestion.questionText}
+                      </p>
+                      {currentQuestion.questionTextHindi && (
+                        <p className="text-sm text-muted-foreground mt-1.5 font-devanagari border-t pt-1.5">
+                          <span className="font-semibold mr-1 text-xs">हिंदी:</span>
+                          {currentQuestion.questionTextHindi}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -312,6 +419,13 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
               <div className="space-y-2.5">
                 {currentQuestion.options.map((opt) => {
                   const isSelected = curState?.selectedOptionId === opt.id;
+                  const primaryText = language === "HI" && opt.optionTextHindi ? opt.optionTextHindi : opt.optionText;
+                  const secondaryText = language === "HI" && opt.optionTextHindi && opt.optionText !== opt.optionTextHindi
+                    ? opt.optionText
+                    : language === "EN" && opt.optionTextHindi
+                    ? opt.optionTextHindi
+                    : null;
+
                   return (
                     <button
                       key={opt.id}
@@ -333,11 +447,13 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
                         )}>
                           {opt.optionOrder}
                         </span>
-                        <div>
-                          <span>{opt.optionText}</span>
-                          {opt.optionTextHindi && (
+                        <div className="flex-1">
+                          <span className={language === "HI" && opt.optionTextHindi ? "font-devanagari text-base" : ""}>
+                            {primaryText}
+                          </span>
+                          {secondaryText && (
                             <p className="text-xs text-muted-foreground mt-0.5">
-                              {opt.optionTextHindi}
+                              {secondaryText}
                             </p>
                           )}
                         </div>
@@ -384,7 +500,7 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
         </main>
 
         {/* Phase 25: Question Palette sidebar */}
-        <aside className="hidden lg:flex w-64 border-l bg-muted/20 flex-col p-4 overflow-y-auto">
+        <aside className="hidden lg:flex w-72 border-l bg-muted/20 flex-col p-4 overflow-y-auto">
           <h3 className="text-sm font-semibold mb-3">Question Palette</h3>
 
           {/* Legend */}
@@ -403,21 +519,52 @@ export default function AttemptPage({ params }: { params: { attemptId: string } 
             ))}
           </div>
 
-          {/* Grid */}
-          <div className="flex flex-wrap gap-1.5">
-            {questions.map((q, idx) => {
-              const s = getState(q.id);
-              return (
-                <PaletteButton
-                  key={q.id}
-                  order={idx + 1}
-                  state={deriveState(s)}
-                  active={idx === currentIndex}
-                  onClick={() => setCurrentIndex(idx)}
-                />
-              );
-            })}
-          </div>
+          {/* Palette grouped by sections if available, otherwise flat grid */}
+          {sections.length > 1 ? (
+            <div className="space-y-4">
+              {sections.map(sec => (
+                <div key={sec.name} className="border-t pt-3 first:border-0 first:pt-0">
+                  <div className="flex items-center justify-between text-xs font-semibold text-foreground mb-2">
+                    <span className="truncate">{sec.name}</span>
+                    <span className="text-[11px] text-muted-foreground font-normal">
+                      {sec.indices.filter(i => questions[i] && localState[questions[i].id]?.selectedOptionId !== null).length}/{sec.count}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {sec.indices.map(idx => {
+                      const q = questions[idx];
+                      if (!q) return null;
+                      const s = getState(q.id);
+                      return (
+                        <PaletteButton
+                          key={q.id}
+                          order={idx + 1}
+                          state={deriveState(s)}
+                          active={idx === currentIndex}
+                          onClick={() => setCurrentIndex(idx)}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-1.5">
+              {questions.map((q, idx) => {
+                const s = getState(q.id);
+                return (
+                  <PaletteButton
+                    key={q.id}
+                    order={idx + 1}
+                    state={deriveState(s)}
+                    active={idx === currentIndex}
+                    onClick={() => setCurrentIndex(idx)}
+                  />
+                );
+              })}
+            </div>
+          )}
 
           {/* Stats */}
           {questions.length > 0 && (

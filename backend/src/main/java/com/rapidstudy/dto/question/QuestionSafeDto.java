@@ -19,6 +19,9 @@ public class QuestionSafeDto {
     private Long         id;
     private Long         topicId;
     private String       topicName;
+    private Long         subjectId;
+    private String       subjectName;
+    private String       sectionName;
     private String       questionText;
     private String       questionTextHindi;
     private QuestionType questionType;

@@ -22,6 +22,10 @@ public class MockTestDto {
     private Boolean       isPublished;
     private String        paperType;    // MOCK_TEST | PREVIOUS_YEAR
     private Integer       paperYear;   // e.g. 2023, null for mock tests
+    private LocalDateTime liveStartsAt;
+    private LocalDateTime liveEndsAt;
+    private Boolean       isLive;
+    private String        liveStatus;  // REGULAR | UPCOMING | LIVE | ENDED
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

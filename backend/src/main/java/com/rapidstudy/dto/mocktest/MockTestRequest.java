@@ -34,4 +34,7 @@ public class MockTestRequest {
     /** MOCK_TEST or PREVIOUS_YEAR */
     private String  paperType = "MOCK_TEST";
     private Integer paperYear;
+
+    private java.time.LocalDateTime liveStartsAt;
+    private java.time.LocalDateTime liveEndsAt;
 }

@@ -59,6 +59,14 @@ public class MockTest {
     @Column(name = "paper_year")
     private Integer paperYear;
 
+    /** Live / Scheduled test start time (null for regular anytime tests) */
+    @Column(name = "live_starts_at")
+    private LocalDateTime liveStartsAt;
+
+    /** Live / Scheduled test end time */
+    @Column(name = "live_ends_at")
+    private LocalDateTime liveEndsAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
