@@ -24,6 +24,8 @@ export interface LoginRequest {
   password: string;
 }
 
+export type UserRole = 'STUDENT' | 'CONTENT_CREATOR' | 'REVIEWER' | 'ADMIN' | 'SUPER_ADMIN';
+
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
@@ -31,7 +33,7 @@ export interface AuthResponse {
   userId: number;
   name: string;
   email: string;
-  role: 'STUDENT' | 'ADMIN' | 'SUPER_ADMIN';
+  role: UserRole;
   language: 'EN' | 'HINDI' | 'ENGLISH';
 }
 
@@ -40,7 +42,7 @@ export interface UserProfile {
   name: string;
   email: string;
   phone: string | null;
-  role: 'STUDENT' | 'ADMIN' | 'SUPER_ADMIN';
+  role: UserRole;
   isActive: boolean;
   language: 'ENGLISH' | 'HINDI';
   createdAt: string;

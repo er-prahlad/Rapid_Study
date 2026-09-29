@@ -5,5 +5,9 @@ package com.rapidstudy.enums;
  */
 public enum Role {
     STUDENT,
-    ADMIN
+    CONTENT_CREATOR,
+    REVIEWER,
+    ADMIN,
+    SUPER_ADMIN
 }
+

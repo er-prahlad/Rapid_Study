@@ -3,14 +3,59 @@
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { usersApi } from '@/services/api';
-import { Button, Badge, Skeleton, Pagination, EmptyState, Modal, Alert, Select, Toggle } from '@/components/ui';
+import { Button, Skeleton, Pagination, EmptyState, Modal, Alert, Select, Toggle } from '@/components/ui';
 import { formatDate, formatDateTime, getInitials, debounce } from '@/lib/utils';
-import type { AdminUser } from '@/types/api';
+import type { AdminUser, UserRole } from '@/types/api';
+import { useAuth } from '@/contexts/AuthContext';
 
-type RoleFilter = '' | 'STUDENT' | 'ADMIN';
+type RoleFilter = '' | UserRole;
+
+const ROLE_OPTIONS = [
+  { value: 'STUDENT', label: 'Student / Candidate' },
+  { value: 'CONTENT_CREATOR', label: 'Content Creator (Drafts & Uploads)' },
+  { value: 'REVIEWER', label: 'Reviewer (Verifies & Approves)' },
+  { value: 'ADMIN', label: 'Admin (System Management)' },
+  { value: 'SUPER_ADMIN', label: 'Super Admin (Full System Control)' },
+];
+
+function RoleBadgeView({ role }: { role: string }) {
+  switch (role) {
+    case 'SUPER_ADMIN':
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
+          Super Admin
+        </span>
+      );
+    case 'ADMIN':
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
+          Admin
+        </span>
+      );
+    case 'REVIEWER':
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+          Reviewer
+        </span>
+      );
+    case 'CONTENT_CREATOR':
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+          Content Creator
+        </span>
+      );
+    default:
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+          Student
+        </span>
+      );
+  }
+}
 
 export default function UsersPage() {
   const qc = useQueryClient();
+  const { isSuperAdmin } = useAuth();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
   const [roleFilter, setRole] = useState<RoleFilter>('');
@@ -59,7 +104,10 @@ export default function UsersPage() {
       setSelected(null);
       setAlert({ type: 'success', msg: 'User role updated successfully.' });
     },
-    onError: () => setAlert({ type: 'error', msg: 'Failed to update user role.' }),
+    onError: (err: any) => {
+      const msg = err?.response?.data?.message || 'Failed to update user role.';
+      setAlert({ type: 'error', msg });
+    },
   });
 
   const [newRole, setNewRole] = useState('STUDENT');
@@ -69,6 +117,22 @@ export default function UsersPage() {
       {alert && (
         <Alert type={alert.type} message={alert.msg} onClose={() => setAlert(null)} />
       )}
+
+      {/* Role explanation header */}
+      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">Staff & Sub-Admins Management</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Assign granular roles: <strong>Content Creator</strong> (types/uploads questions), <strong>Reviewer</strong> (verifies/approves questions), or <strong>Admin / Super Admin</strong>.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[11px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">Content Creator</span>
+          <span className="text-[11px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">Reviewer</span>
+          <span className="text-[11px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium">Admin</span>
+          <span className="text-[11px] px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-400 font-medium">Super Admin</span>
+        </div>
+      </div>
 
       {/* Filters */}
       <div className="bg-card border border-border rounded-xl p-4 flex flex-wrap gap-3 items-center">
@@ -87,13 +151,17 @@ export default function UsersPage() {
         <Select
           id="users-role-filter"
           options={[
-            { value: 'STUDENT', label: 'Student' },
+            { value: '', label: 'All Roles' },
+            { value: 'CONTENT_CREATOR', label: 'Content Creator' },
+            { value: 'REVIEWER', label: 'Reviewer' },
             { value: 'ADMIN', label: 'Admin' },
+            { value: 'SUPER_ADMIN', label: 'Super Admin' },
+            { value: 'STUDENT', label: 'Student' },
           ]}
           placeholder="All Roles"
           value={roleFilter}
           onChange={e => { setRole(e.target.value as RoleFilter); setPage(0); }}
-          className="w-36"
+          className="w-44"
         />
         <Select
           id="users-status-filter"
@@ -157,9 +225,7 @@ export default function UsersPage() {
                       </div>
                     </td>
                     <td>
-                      <Badge variant={user.role === 'ADMIN' ? 'purple' : 'info'}>
-                        {user.role}
-                      </Badge>
+                      <RoleBadgeView role={user.role} />
                     </td>
                     <td>
                       <Toggle
@@ -201,9 +267,9 @@ export default function UsersPage() {
       <Modal
         open={!!selected}
         onClose={() => setSelected(null)}
-        title="Change User Role"
-        description={selected?.email}
-        size="sm"
+        title="Change Staff / User Role"
+        description={`Configure role for ${selected?.name} (${selected?.email})`}
+        size="md"
         footer={
           <>
             <Button variant="outline" onClick={() => setSelected(null)}>Cancel</Button>
@@ -216,16 +282,48 @@ export default function UsersPage() {
           </>
         }
       >
-        <Select
-          label="Select Role"
-          id="change-role-select"
-          value={newRole}
-          onChange={e => setNewRole(e.target.value)}
-          options={[
-            { value: 'STUDENT', label: 'Student' },
-            { value: 'ADMIN', label: 'Admin' },
-          ]}
-        />
+        <div className="space-y-4">
+          <Select
+            label="Select Role"
+            id="change-role-select"
+            value={newRole}
+            onChange={e => setNewRole(e.target.value)}
+            options={
+              isSuperAdmin
+                ? ROLE_OPTIONS
+                : ROLE_OPTIONS.filter(r => r.value !== 'SUPER_ADMIN')
+            }
+          />
+
+          <div className="rounded-lg bg-muted/50 p-3 text-xs space-y-1.5 border border-border">
+            <p className="font-semibold text-foreground">Role Permissions Overview:</p>
+            {newRole === 'CONTENT_CREATOR' && (
+              <p className="text-muted-foreground">
+                ✍️ <strong>CONTENT_CREATOR</strong>: Can type questions, import CSV/Excel questions, and generate AI drafts. Cannot publish or activate questions live.
+              </p>
+            )}
+            {newRole === 'REVIEWER' && (
+              <p className="text-muted-foreground">
+                🔍 <strong>REVIEWER</strong>: Can review, verify, approve, and activate questions. Can also review mock tests.
+              </p>
+            )}
+            {newRole === 'ADMIN' && (
+              <p className="text-muted-foreground">
+                🛠️ <strong>ADMIN</strong>: System manager with access to dashboard, analytics, exams, subjects, questions, mock tests, and users.
+              </p>
+            )}
+            {newRole === 'SUPER_ADMIN' && (
+              <p className="text-muted-foreground">
+                👑 <strong>SUPER_ADMIN</strong>: Full system control including managing other Super Admins and critical system configurations.
+              </p>
+            )}
+            {newRole === 'STUDENT' && (
+              <p className="text-muted-foreground">
+                🎓 <strong>STUDENT</strong>: Standard platform user. Access to student frontend only.
+              </p>
+            )}
+          </div>
+        </div>
       </Modal>
     </div>
   );

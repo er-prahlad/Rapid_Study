@@ -4,14 +4,11 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const rawUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080").trim().replace(/\/auth\/login\/?$/, "").replace(/\/+$/, "");
 
-const API_BASE_URL = BASE_URL.endsWith("/api/v1")
-  ? BASE_URL
-  : `${BASE_URL}/api/v1`;
-
-console.log("API_BASE_URL:", API_BASE_URL);
+const API_BASE_URL = rawUrl.endsWith("/api/v1")
+  ? rawUrl
+  : `${rawUrl}/api/v1`;
 
 const TOKEN_KEY = "rs_access_token";
 const REFRESH_KEY = "rs_refresh_token";

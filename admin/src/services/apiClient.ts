@@ -1,10 +1,11 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+const rawUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1').trim().replace(/\/auth\/login\/?$/, '').replace(/\/+$/, '');
+const BASE_URL = rawUrl.endsWith('/api/v1') ? rawUrl : `${rawUrl}/api/v1`;
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
-  timeout: 30000,
+  timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });
 

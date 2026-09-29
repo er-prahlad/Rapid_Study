@@ -96,8 +96,8 @@ public class SecurityConfig {
                         "/api/v1/search"
                 ).permitAll()
 
-                // ── ADMIN ONLY ───────────────────────────────────────────
-                .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                // ── ADMIN & STAFF ─────────────────────────────────────────
+                .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "CONTENT_CREATOR", "REVIEWER")
 
                 // ── STUDENT + ADMIN (any authenticated user) ─────────────
                 .requestMatchers(

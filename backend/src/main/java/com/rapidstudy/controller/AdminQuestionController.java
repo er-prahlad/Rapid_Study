@@ -33,7 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/admin/questions")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'CONTENT_CREATOR', 'REVIEWER')")
 @Tag(name = "Admin — Questions", description = "Admin question bank management")
 @SecurityRequirement(name = "bearerAuth")
 public class AdminQuestionController {
@@ -81,6 +81,7 @@ public class AdminQuestionController {
 
     @PatchMapping("/{id}/deactivate")
     @Operation(summary = "Deactivate a question")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'REVIEWER')")
     public ResponseEntity<ApiResponse<Void>> deactivate(@PathVariable Long id) {
         questionService.deactivateQuestion(id);
         return ResponseEntity.ok(ApiResponse.success("Question deactivated", null));
@@ -88,6 +89,7 @@ public class AdminQuestionController {
 
     @PatchMapping("/{id}/activate")
     @Operation(summary = "Activate a question")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'REVIEWER')")
     public ResponseEntity<ApiResponse<Void>> activate(@PathVariable Long id) {
         questionService.activateQuestion(id);
         return ResponseEntity.ok(ApiResponse.success("Question activated", null));

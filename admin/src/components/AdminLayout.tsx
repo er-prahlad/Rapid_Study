@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
+import type { UserRole } from '@/types/api';
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ReactNode;
   badge?: string;
-  children?: NavItem[];
+  roles?: UserRole[]; // If not specified, accessible to all staff
 }
 
 function BookIcon()     { return <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>; }
@@ -22,28 +23,67 @@ function AcademicIcon() { return <svg className="w-4.5 h-4.5" fill="none" stroke
 function QuestionIcon() { return <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>; }
 function TestIcon()     { return <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>; }
 function BrainIcon()    { return <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>; }
-
 function SubjectIcon()  { return <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>; }
 function TopicIcon()    { return <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>; }
 
-const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard',  label: 'Dashboard',    icon: <ChartIcon /> },
-  { href: '/analytics',  label: 'Analytics',    icon: <ClipboardIcon /> },
-  { href: '/exams',      label: 'Exams',         icon: <AcademicIcon /> },
-  { href: '/subjects',   label: 'Subjects',      icon: <SubjectIcon /> },
-  { href: '/topics',     label: 'Topics',        icon: <TopicIcon /> },
-  { href: '/questions',  label: 'Questions',     icon: <QuestionIcon /> },
-  { href: '/tests',      label: 'Mock Tests',    icon: <TestIcon /> },
-  { href: '/ai-drafts',  label: 'AI Generator',  icon: <BrainIcon />, badge: 'AI' },
-  { href: '/users',      label: 'Users',         icon: <UsersIcon /> },
+const ALL_NAV_ITEMS: NavItem[] = [
+  { href: '/dashboard',  label: 'Dashboard',    icon: <ChartIcon />,      roles: ['ADMIN', 'SUPER_ADMIN'] },
+  { href: '/analytics',  label: 'Analytics',    icon: <ClipboardIcon />,  roles: ['ADMIN', 'SUPER_ADMIN'] },
+  { href: '/exams',      label: 'Exams',         icon: <AcademicIcon />,   roles: ['ADMIN', 'SUPER_ADMIN', 'REVIEWER'] },
+  { href: '/subjects',   label: 'Subjects',      icon: <SubjectIcon />,    roles: ['ADMIN', 'SUPER_ADMIN', 'REVIEWER'] },
+  { href: '/topics',     label: 'Topics',        icon: <TopicIcon />,      roles: ['ADMIN', 'SUPER_ADMIN', 'REVIEWER'] },
+  { href: '/questions',  label: 'Questions',     icon: <QuestionIcon />,   roles: ['CONTENT_CREATOR', 'REVIEWER', 'ADMIN', 'SUPER_ADMIN'] },
+  { href: '/tests',      label: 'Mock Tests',    icon: <TestIcon />,       roles: ['REVIEWER', 'ADMIN', 'SUPER_ADMIN'] },
+  { href: '/ai-drafts',  label: 'AI Generator',  icon: <BrainIcon />, badge: 'AI', roles: ['CONTENT_CREATOR', 'REVIEWER', 'ADMIN', 'SUPER_ADMIN'] },
+  { href: '/users',      label: 'Users & Staff', icon: <UsersIcon />,      roles: ['ADMIN', 'SUPER_ADMIN'] },
 ];
+
+function RoleBadge({ role }: { role?: UserRole }) {
+  if (!role) return null;
+  switch (role) {
+    case 'SUPER_ADMIN':
+      return (
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30">
+          Super Admin
+        </span>
+      );
+    case 'ADMIN':
+      return (
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-blue-500/20 text-blue-300 border border-blue-500/30">
+          Admin
+        </span>
+      );
+    case 'REVIEWER':
+      return (
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+          Reviewer
+        </span>
+      );
+    case 'CONTENT_CREATOR':
+      return (
+        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
+          Creator
+        </span>
+      );
+    default:
+      return null;
+  }
+}
 
 function SidebarNav({ onClose }: { onClose?: () => void }) {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const currentRole = user?.role;
+
+  // Filter navigation items by active user's permissions
+  const visibleItems = ALL_NAV_ITEMS.filter((item) => {
+    if (!item.roles) return true;
+    return currentRole && item.roles.includes(currentRole);
+  });
 
   return (
     <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto">
-      {NAV_ITEMS.map((item) => {
+      {visibleItems.map((item) => {
         const active = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
         return (
           <Link
@@ -78,32 +118,36 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
     <div className="flex flex-col h-full" style={{ background: 'hsl(var(--sidebar-bg))' }}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 h-16 border-b border-white/10 shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white">
           <BookIcon />
         </div>
         <div>
           <p className="text-white font-bold text-sm leading-tight">RapidStudy</p>
-          <p className="text-slate-400 text-xs">Admin Panel</p>
+          <p className="text-slate-400 text-xs">Admin & Staff Portal</p>
         </div>
       </div>
 
       {/* Nav */}
       <SidebarNav onClose={onClose} />
 
-      {/* User */}
+      {/* User profile card */}
       <div className="shrink-0 px-3 py-4 border-t border-white/10">
-        <div className="flex items-center gap-3 px-3 py-2.5">
+        <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5">
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold shrink-0">
-            {user?.name?.charAt(0)?.toUpperCase() ?? 'A'}
+            {user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-white text-xs font-medium truncate">{user?.name ?? 'Admin'}</p>
-            <p className="text-slate-400 text-xs truncate">{user?.email ?? ''}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-white text-xs font-semibold truncate">{user?.name ?? 'Staff User'}</p>
+            </div>
+            <div className="mt-0.5">
+              <RoleBadge role={user?.role} />
+            </div>
           </div>
           <button
             onClick={logout}
             title="Logout"
-            className="text-slate-400 hover:text-white transition-colors shrink-0"
+            className="text-slate-400 hover:text-white transition-colors shrink-0 p-1 rounded hover:bg-white/10"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -142,7 +186,10 @@ export function Sidebar({ mobileOpen, onMobileClose }: { mobileOpen: boolean; on
 
 export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
   const pathname = usePathname();
-  const pageTitle = NAV_ITEMS.find(n => pathname === n.href || pathname.startsWith(n.href))?.label ?? 'Admin';
+  const { user } = useAuth();
+  const pageTitle = ALL_NAV_ITEMS.find(n => pathname === n.href || pathname.startsWith(n.href))?.label ?? 'Staff Portal';
+
+  const swaggerUrl = 'https://rapidstudy-backend.onrender.com/swagger-ui/index.html';
 
   return (
     <header
@@ -163,14 +210,17 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
         </svg>
       </button>
 
-      <h1 className="text-base font-semibold text-foreground">{pageTitle}</h1>
+      <div className="flex items-center gap-3">
+        <h1 className="text-base font-semibold text-foreground">{pageTitle}</h1>
+        {user?.role && <RoleBadge role={user.role} />}
+      </div>
 
       <div className="flex-1" />
 
       {/* Quick actions */}
       <div className="flex items-center gap-2">
         <a
-          href="http://localhost:8080/swagger-ui.html"
+          href={swaggerUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-muted transition-colors"
@@ -178,7 +228,7 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
-          Swagger
+          API Docs
         </a>
       </div>
     </header>

@@ -55,8 +55,12 @@ public class AuthenticatedUserPrincipal implements UserDetails {
 
     // Convenience check -----------------------------------------------
 
-    public boolean isAdmin()   { return role == Role.ADMIN; }
-    public boolean isStudent() { return role == Role.STUDENT; }
+    public boolean isSuperAdmin()    { return role == Role.SUPER_ADMIN; }
+    public boolean isAdmin()         { return role == Role.ADMIN || role == Role.SUPER_ADMIN; }
+    public boolean isReviewer()      { return role == Role.REVIEWER || role == Role.ADMIN || role == Role.SUPER_ADMIN; }
+    public boolean isContentCreator() { return role == Role.CONTENT_CREATOR || role == Role.ADMIN || role == Role.SUPER_ADMIN; }
+    public boolean isStaff()         { return role != Role.STUDENT; }
+    public boolean isStudent()       { return role == Role.STUDENT; }
 
     @Override
     public String toString() {

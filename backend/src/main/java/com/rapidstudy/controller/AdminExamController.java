@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'CONTENT_CREATOR', 'REVIEWER')")
 @Tag(name = "Admin — Exams", description = "Admin exam, subject and topic management")
 @SecurityRequirement(name = "bearerAuth")
 public class AdminExamController {

@@ -37,7 +37,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/admin/tests")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'REVIEWER')")
 @Tag(name = "Admin — Tests", description = "Admin mock test builder")
 @SecurityRequirement(name = "bearerAuth")
 public class AdminMockTestController {

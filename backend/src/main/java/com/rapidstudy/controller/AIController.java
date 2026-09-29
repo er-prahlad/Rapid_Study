@@ -125,7 +125,7 @@ public class AIController {
 
     @PostMapping("/generate-questions")
     @Operation(summary = "Generate questions as DRAFT — admin review required before publishing")
-    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN', 'CONTENT_CREATOR', 'REVIEWER')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> generateQuestions(
             @RequestBody Map<String, Object> body) {
 
