@@ -129,11 +129,12 @@ fun RapidStudyApp(
         AppScreen.MAIN -> {
             val dashboard = (dashboardState as? UiState.Success<DashboardResponse>)?.data
             MainScreen(
-                dashboard  = dashboard,
-                userName   = userName ?: "Student",
-                apiService = apiService,
-                onRefresh  = { homeViewModel.loadDashboard() },
-                onLogout   = {
+                dashboard    = dashboard,
+                userName     = userName ?: "Student",
+                apiService   = apiService,
+                tokenManager = tokenManager,
+                onRefresh    = { homeViewModel.loadDashboard() },
+                onLogout     = {
                     authViewModel.logout()
                     currentScreen = AppScreen.LOGIN
                 }
